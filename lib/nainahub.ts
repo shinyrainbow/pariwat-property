@@ -82,10 +82,10 @@ export interface FetchPropertiesParams {
 export async function fetchNainaHubProperties(
   params: FetchPropertiesParams = {}
 ): Promise<NainaHubResponse> {
-  const apiKey = process.env["X-API-KEY"];
+  const apiKey = process.env["X_API_KEY"];
 
   if (!apiKey) {
-    throw new Error("X-API-KEY environment variable is not set");
+    throw new Error("X_API_KEY environment variable is not set");
   }
 
   const searchParams = new URLSearchParams();

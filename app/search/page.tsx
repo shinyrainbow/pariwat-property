@@ -606,13 +606,13 @@ function SearchContent() {
                   >
                     <Card
                       className={`group overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer border-0 bg-white ${
-                        viewMode === "list" ? "flex flex-row" : ""
+                        viewMode === "list" ? "flex flex-row h-40" : ""
                       }`}
                     >
                       {/* Property Image */}
                       <div
-                        className={`relative overflow-hidden bg-gray-100 ${
-                          viewMode === "list" ? "w-48 h-full" : "h-48"
+                        className={`relative overflow-hidden bg-gray-100 flex-shrink-0 ${
+                          viewMode === "list" ? "w-48 h-40" : "h-48"
                         }`}
                       >
                         {property.imageUrls && property.imageUrls.length > 0 ? (
