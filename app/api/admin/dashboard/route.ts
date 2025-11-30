@@ -37,6 +37,7 @@ export async function GET() {
       activePromotionsCount,
       reviewStats,
       extensionsWithPromotions,
+      inquiryStats,
     ] = await Promise.all([
       // Popular properties count (exclude sold/rented properties)
       prisma.propertyExtension.count({
@@ -69,6 +70,11 @@ export async function GET() {
         },
         select: { externalPropertyId: true },
       }),
+      // Inquiry stats
+      prisma.inquiry.groupBy({
+        by: ["status"],
+        _count: true,
+      }),
     ]);
 
     // Calculate stats from API data
@@ -88,6 +94,9 @@ export async function GET() {
         reviewStats.find((r) => r.status === "pending")?._count || 0,
       publishedReviews:
         reviewStats.find((r) => r.status === "published")?._count || 0,
+      newInquiries:
+        inquiryStats.find((i) => i.status === "new")?._count || 0,
+      totalInquiries: inquiryStats.reduce((sum, i) => sum + i._count, 0),
     };
 
     // Property type distribution from real data

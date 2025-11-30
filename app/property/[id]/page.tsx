@@ -81,6 +81,69 @@ export default function PropertyDetailPage() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [recommendedProperties, setRecommendedProperties] = useState<Property[]>([]);
   const [isVisible, setIsVisible] = useState(false);
+  const [showLineQR, setShowLineQR] = useState(false);
+  const [copiedText, setCopiedText] = useState<string | null>(null);
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedText(label);
+      setTimeout(() => setCopiedText(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  // Contact form state
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    phone: "",
+    message: "",
+  });
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [formSuccess, setFormSuccess] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!contactForm.name.trim() || !contactForm.phone.trim()) {
+      setFormError("กรุณากรอกชื่อและเบอร์โทรศัพท์");
+      return;
+    }
+
+    setFormSubmitting(true);
+    setFormError("");
+
+    try {
+      // Send inquiry to API
+      const response = await fetch("/api/public/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          propertyId: property?.id,
+          propertyCode: property?.agentPropertyCode,
+          propertyTitle: property?.propertyTitleTh || property?.propertyTitleEn,
+          name: contactForm.name,
+          phone: contactForm.phone,
+          message: contactForm.message || `สนใจทรัพย์รหัส ${property?.agentPropertyCode}`,
+        }),
+      });
+
+      if (response.ok) {
+        setFormSuccess(true);
+        setContactForm({ name: "", phone: "", message: "" });
+        // Reset success message after 5 seconds
+        setTimeout(() => setFormSuccess(false), 5000);
+      } else {
+        setFormError("ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้ง");
+      }
+    } catch {
+      setFormError("ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
 
   // Trigger entrance animation
   useEffect(() => {
@@ -438,26 +501,15 @@ export default function PropertyDetailPage() {
                     </div>
                   </div>
 
-                  {/* Premium Badges */}
-                  <div className="absolute top-4 left-4 flex flex-col gap-2">
-                    {property.featured && (
+                  {/* Premium Badge */}
+                  {property.featured && (
+                    <div className="absolute top-4 left-4">
                       <span className="bg-gradient-to-r from-[#c6af6c] to-[#d4c07a] text-white px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 shadow-lg">
                         <Star className="w-4 h-4 fill-white" />
                         Premium
                       </span>
-                    )}
-                    <span
-                      className={`px-4 py-2 rounded-full text-sm font-semibold text-white shadow-lg ${
-                        property.listingType === "rent"
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600"
-                          : property.listingType === "sale"
-                          ? "bg-gradient-to-r from-amber-500 to-amber-600"
-                          : "bg-gradient-to-r from-purple-500 to-purple-600"
-                      }`}
-                    >
-                      {getListingTypeLabel(property.listingType)}
-                    </span>
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Secondary Images */}
@@ -800,51 +852,134 @@ export default function PropertyDetailPage() {
 
                   {/* Contact Buttons */}
                   <div className="space-y-3">
-                    <Button className="w-full bg-[#c6af6c] hover:bg-[#b39d5b] text-white py-6 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all">
-                      <Phone className="w-5 h-5 mr-2" />
-                      โทรติดต่อ
-                    </Button>
+                    {/* Phone Dropdown */}
+                    <div className="relative group">
+                      <Button className="w-full bg-[#c6af6c] hover:bg-[#b39d5b] text-white py-6 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all">
+                        <Phone className="w-5 h-5 mr-2" />
+                        {copiedText === "phone1" || copiedText === "phone2" ? "คัดลอกแล้ว!" : "โทรติดต่อ"}
+                      </Button>
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                        <button
+                          onClick={() => copyToClipboard("0655614169", "phone1")}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-t-xl transition-colors text-left"
+                        >
+                          <Phone className="w-4 h-4 text-[#c6af6c]" />
+                          <span className="text-gray-700">065-561-4169</span>
+                          {copiedText === "phone1" && (
+                            <span className="ml-auto text-xs text-green-600">คัดลอกแล้ว!</span>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => copyToClipboard("0936642593", "phone2")}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-b-xl transition-colors border-t border-gray-100 text-left"
+                        >
+                          <Phone className="w-4 h-4 text-[#c6af6c]" />
+                          <span className="text-gray-700">093-664-2593</span>
+                          {copiedText === "phone2" && (
+                            <span className="ml-auto text-xs text-green-600">คัดลอกแล้ว!</span>
+                          )}
+                        </button>
+                      </div>
+                    </div>
                     <Button
                       variant="outline"
                       className="w-full border-2 border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white py-6 text-base font-semibold rounded-xl transition-all"
+                      onClick={() => setShowLineQR(true)}
                     >
                       <MessageCircle className="w-5 h-5 mr-2" />
                       Line
                     </Button>
                     <Button
                       variant="outline"
-                      className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 py-6 text-base font-semibold rounded-xl transition-all"
+                      className="w-full border-gray-200 text-gray-500 hover:bg-gray-50 py-6 text-base font-medium rounded-xl transition-all"
+                      onClick={() => copyToClipboard("bkgroup.ch.official@gmail.com", "email")}
                     >
                       <Mail className="w-5 h-5 mr-2" />
-                      ส่งอีเมล
+                      {copiedText === "email" ? "คัดลอกแล้ว!" : "คัดลอกอีเมล"}
                     </Button>
                   </div>
+
+                  {/* Line QR Modal */}
+                  {showLineQR && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                      <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-bold text-gray-900">เพิ่มเพื่อนทาง Line</h3>
+                          <button
+                            onClick={() => setShowLineQR(false)}
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                          >
+                            <X className="w-5 h-5 text-gray-500" />
+                          </button>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl p-4 flex justify-center">
+                          <Image
+                            src="/pariwat-qr.jpg"
+                            alt="Line QR Code"
+                            width={200}
+                            height={200}
+                            className="rounded-lg"
+                          />
+                        </div>
+                        <p className="text-center text-sm text-gray-500 mt-4">
+                          สแกน QR Code เพื่อเพิ่มเพื่อนทาง Line
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Quick Contact Form */}
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <h4 className="text-sm font-semibold text-gray-900 mb-3">
                       ขอข้อมูลเพิ่มเติม
                     </h4>
-                    <div className="space-y-3">
-                      <input
-                        type="text"
-                        placeholder="ชื่อ-นามสกุล"
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6af6c]/50 focus:border-[#c6af6c] transition-all text-gray-900"
-                      />
-                      <input
-                        type="tel"
-                        placeholder="เบอร์โทรศัพท์"
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6af6c]/50 focus:border-[#c6af6c] transition-all text-gray-900"
-                      />
-                      <textarea
-                        placeholder="ข้อความ (ไม่บังคับ)"
-                        rows={3}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6af6c]/50 focus:border-[#c6af6c] transition-all resize-none text-gray-900"
-                      />
-                      <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white py-3 rounded-xl font-semibold transition-all">
-                        ส่งข้อมูล
-                      </Button>
-                    </div>
+
+                    {formSuccess ? (
+                      <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                        <div className="text-green-600 font-semibold mb-1">ส่งข้อมูลเรียบร้อยแล้ว!</div>
+                        <p className="text-sm text-green-500">เราจะติดต่อกลับโดยเร็วที่สุด</p>
+                      </div>
+                    ) : (
+                      <form onSubmit={handleContactSubmit} className="space-y-3">
+                        <input
+                          type="text"
+                          placeholder="ชื่อ-นามสกุล *"
+                          value={contactForm.name}
+                          onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6af6c]/50 focus:border-[#c6af6c] transition-all text-gray-900"
+                          disabled={formSubmitting}
+                        />
+                        <input
+                          type="tel"
+                          placeholder="เบอร์โทรศัพท์ *"
+                          value={contactForm.phone}
+                          onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6af6c]/50 focus:border-[#c6af6c] transition-all text-gray-900"
+                          disabled={formSubmitting}
+                        />
+                        <textarea
+                          placeholder="ข้อความ (ไม่บังคับ)"
+                          rows={3}
+                          value={contactForm.message}
+                          onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6af6c]/50 focus:border-[#c6af6c] transition-all resize-none text-gray-900"
+                          disabled={formSubmitting}
+                        />
+
+                        {formError && (
+                          <p className="text-sm text-red-500">{formError}</p>
+                        )}
+
+                        <Button
+                          type="submit"
+                          className="w-full bg-gray-900 hover:bg-gray-800 text-white py-3 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={formSubmitting}
+                        >
+                          {formSubmitting ? "กำลังส่ง..." : "ส่งข้อมูล"}
+                        </Button>
+                      </form>
+                    )}
+
                     <p className="text-xs text-gray-400 mt-3 text-center">
                       เราจะติดต่อกลับภายใน 24 ชั่วโมง
                     </p>

@@ -165,12 +165,12 @@ export default function ReviewsPage() {
               <p className="text-gray-600 mb-6">
                 เป็นคนแรกที่แบ่งปันประสบการณ์การใช้บริการ Pariwat Property
               </p>
-              <Link href="/reviews/new">
+              {/* <Link href="/reviews/new">
                 <Button className="bg-[#c6af6c] hover:bg-[#b39d5b] text-white">
                   <Plus className="w-4 h-4 mr-2" />
                   เพิ่มรีวิว
                 </Button>
-              </Link>
+              </Link> */}
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

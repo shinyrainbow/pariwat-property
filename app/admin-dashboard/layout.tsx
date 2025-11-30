@@ -17,6 +17,7 @@ import {
   Tag,
   Star,
   Wrench,
+  MessageSquare,
 } from "lucide-react";
 import Image from "next/image";
 import { signOut } from "next-auth/react";
@@ -42,6 +43,11 @@ const menuItems = [
     label: "จัดการรีวิว",
     href: "/admin-dashboard/reviews",
     icon: Star,
+  },
+  {
+    label: "ข้อความติดต่อ",
+    href: "/admin-dashboard/inquiries",
+    icon: MessageSquare,
   },
   {
     label: "บริการอื่นๆ",

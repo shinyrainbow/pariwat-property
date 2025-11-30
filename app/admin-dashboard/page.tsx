@@ -27,6 +27,8 @@ interface DashboardData {
     withPromotions: number;
     pendingReviews: number;
     publishedReviews: number;
+    newInquiries: number;
+    totalInquiries: number;
   };
   recentProperties: Array<{
     id: string;
@@ -154,11 +156,11 @@ export default function AdminDashboardPage() {
       href: "/admin-dashboard/promotions",
     },
     {
-      label: "รีวิวรอตรวจสอบ",
-      value: data.stats.pendingReviews,
+      label: "ข้อความใหม่",
+      value: data.stats.newInquiries,
       icon: MessageSquare,
-      color: "bg-orange-500",
-      href: "/admin-dashboard/reviews",
+      color: data.stats.newInquiries > 0 ? "bg-red-500" : "bg-green-500",
+      href: "/admin-dashboard/inquiries",
     },
   ];
 
@@ -202,7 +204,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Quick Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <Card className="p-4 text-center">
           <p className="text-2xl font-bold text-emerald-600">
             {data.stats.forRent}
@@ -228,10 +230,16 @@ export default function AdminDashboardPage() {
           <p className="text-sm text-gray-600">ปิดการขาย</p>
         </Card>
         <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">
-            {data.stats.publishedReviews}
+          <p className="text-2xl font-bold text-orange-600">
+            {data.stats.pendingReviews}
           </p>
-          <p className="text-sm text-gray-600">รีวิวที่เผยแพร่</p>
+          <p className="text-sm text-gray-600">รีวิวรอตรวจสอบ</p>
+        </Card>
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold text-cyan-600">
+            {data.stats.totalInquiries}
+          </p>
+          <p className="text-sm text-gray-600">ข้อความทั้งหมด</p>
         </Card>
       </div>
 

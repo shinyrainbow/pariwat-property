@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Building2, Phone, Mail, MapPin, Clock, Send, MessageSquare, Facebook, Instagram, Youtube } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import Header from "@/components/layout/header";
 
 export default function ContactPage() {
@@ -43,26 +44,30 @@ export default function ContactPage() {
     {
       icon: Phone,
       title: "โทรศัพท์",
-      details: ["02-XXX-XXXX", "08X-XXX-XXXX"],
+      details: ["065-561-4169", "093-664-2593"],
       color: "bg-green-500",
+      links: ["tel:0655614169", "tel:0936642593"],
     },
     {
       icon: Mail,
       title: "อีเมล",
-      details: ["contact@puriwatproperty.com", "sales@puriwatproperty.com"],
+      details: ["bkgroup.ch.official@gmail.com"],
       color: "bg-blue-500",
+      links: ["mailto:bkgroup.ch.official@gmail.com"],
     },
     {
       icon: MapPin,
       title: "ที่อยู่",
-      details: ["123 ถนนสุขุมวิท", "แขวงคลองเตย เขตคลองเตย", "กรุงเทพมหานคร 10110"],
+      details: ["จังหวัดฉะเชิงเทรา", "ประเทศไทย"],
       color: "bg-red-500",
+      links: [],
     },
     {
       icon: Clock,
       title: "เวลาทำการ",
-      details: ["จันทร์ - ศุกร์: 09:00 - 18:00", "เสาร์ - อาทิตย์: 10:00 - 16:00"],
+      details: ["จันทร์ - อาทิตย์: 09:00 - 18:00"],
       color: "bg-purple-500",
+      links: [],
     },
   ];
 
@@ -94,7 +99,7 @@ export default function ContactPage() {
       {/* Contact Info Cards */}
       <section className="py-12">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {contactInfo.map((info, index) => (
               <Card
                 key={info.title}
@@ -110,12 +115,47 @@ export default function ContactPage() {
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">{info.title}</h3>
                 {info.details.map((detail, i) => (
-                  <p key={i} className="text-gray-600 text-sm">
-                    {detail}
-                  </p>
+                  info.links && info.links[i] ? (
+                    <a
+                      key={i}
+                      href={info.links[i]}
+                      className="block text-gray-600 text-sm hover:text-[#c6af6c] transition-colors"
+                    >
+                      {detail}
+                    </a>
+                  ) : (
+                    <p key={i} className="text-gray-600 text-sm">
+                      {detail}
+                    </p>
+                  )
                 ))}
               </Card>
             ))}
+
+            {/* Line QR Code Card */}
+            <Card
+              className={`p-6 border-0 shadow-lg hover:shadow-xl transition-all duration-500 ${
+                isVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-10"
+              }`}
+              style={{ transitionDelay: "400ms" }}
+            >
+              <div className="w-14 h-14 bg-[#00B900] rounded-full flex items-center justify-center mb-4">
+                <MessageSquare className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Line Official</h3>
+              <p className="text-gray-600 text-sm mb-3">สแกน QR Code เพื่อติดต่อผ่าน Line</p>
+              <div className="flex justify-center">
+                <Image
+                  src="/pariwat-qr.jpg"
+                  alt="Line QR Code"
+                  width={120}
+                  height={120}
+                  className="rounded-lg"
+                />
+              </div>
+            </Card>
           </div>
         </div>
       </section>
@@ -255,10 +295,27 @@ export default function ContactPage() {
                 <div className="h-64 bg-gray-200 flex items-center justify-center">
                   <div className="text-center text-gray-500">
                     <MapPin className="w-12 h-12 mx-auto mb-2 text-[#c6af6c]" />
-                    <p className="font-medium">Google Maps</p>
-                    <p className="text-sm">123 ถนนสุขุมวิท, กรุงเทพฯ</p>
+                    <p className="font-medium">Pariwat Property</p>
+                    <p className="text-sm">ฉะเชิงเทรา, ประเทศไทย</p>
                   </div>
                 </div>
+              </Card>
+
+              {/* Line QR Code Large */}
+              <Card className="p-6 border-0 shadow-lg mb-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">เพิ่มเพื่อนทาง Line</h3>
+                <div className="flex justify-center">
+                  <Image
+                    src="/pariwat-qr.jpg"
+                    alt="Line QR Code"
+                    width={200}
+                    height={200}
+                    className="rounded-lg shadow-md"
+                  />
+                </div>
+                <p className="text-center text-gray-500 text-sm mt-4">
+                  สแกน QR Code เพื่อติดต่อเราผ่าน Line
+                </p>
               </Card>
 
               {/* Social Media */}

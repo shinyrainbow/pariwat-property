@@ -5,23 +5,15 @@ import { useSession } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { User, Mail, Lock, Bell, Shield, Save, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { User, Mail, Lock, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
 
-  const [profile, setProfile] = useState({
+  const profile = {
     name: session?.user?.name || "",
     email: session?.user?.email || "",
-  });
-
-  const [notifications, setNotifications] = useState({
-    emailNewLead: true,
-    emailPropertyView: false,
-    emailWeeklyReport: true,
-  });
+  };
 
   // Password change state
   const [passwords, setPasswords] = useState({
@@ -34,15 +26,6 @@ export default function SettingsPage() {
     type: "success" | "error";
     text: string;
   } | null>(null);
-
-  const handleSaveProfile = async () => {
-    setSaving(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
 
   const handleChangePassword = async () => {
     // Client-side validation
@@ -94,12 +77,6 @@ export default function SettingsPage() {
         <p className="text-gray-600 mt-1">จัดการบัญชีและการตั้งค่าของคุณ</p>
       </div>
 
-      {saved && (
-        <Card className="p-4 bg-green-50 border-green-200">
-          <p className="text-green-800 text-sm">บันทึกการตั้งค่าเรียบร้อยแล้ว</p>
-        </Card>
-      )}
-
       {/* Profile Settings */}
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
@@ -108,7 +85,7 @@ export default function SettingsPage() {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900">ข้อมูลส่วนตัว</h2>
-            <p className="text-sm text-gray-500">อัพเดทข้อมูลบัญชีของคุณ</p>
+            {/* <p className="text-sm text-gray-500">อัพเดทข้อมูลบัญชีของคุณ</p> */}
           </div>
         </div>
 
@@ -121,11 +98,9 @@ export default function SettingsPage() {
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 value={profile.name}
-                onChange={(e) =>
-                  setProfile((prev) => ({ ...prev, name: e.target.value }))
-                }
-                className="pl-10"
+                className="pl-10 bg-gray-100 cursor-not-allowed"
                 placeholder="ชื่อของคุณ"
+                disabled
               />
             </div>
           </div>
@@ -139,23 +114,12 @@ export default function SettingsPage() {
               <Input
                 type="email"
                 value={profile.email}
-                onChange={(e) =>
-                  setProfile((prev) => ({ ...prev, email: e.target.value }))
-                }
-                className="pl-10"
+                className="pl-10 bg-gray-100 cursor-not-allowed"
                 placeholder="email@example.com"
+                disabled
               />
             </div>
           </div>
-
-          <Button
-            onClick={handleSaveProfile}
-            className="bg-[#c6af6c] hover:bg-[#b39d5b] text-white"
-            disabled={saving}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {saving ? "กำลังบันทึก..." : "บันทึกข้อมูล"}
-          </Button>
         </div>
       </Card>
 

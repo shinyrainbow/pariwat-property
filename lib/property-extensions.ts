@@ -355,6 +355,66 @@ export async function getPropertiesWithActivePromotions(): Promise<
   });
 }
 
+/**
+ * Get enhanced properties with active promotions (merged with API data)
+ * Returns full property data including API info and local extensions
+ */
+export async function getEnhancedPropertiesWithPromotions(
+  limit: number = 12
+): Promise<EnhancedProperty[]> {
+  // 1. Get extensions that have active promotions
+  const extensionsWithPromotions = await prisma.propertyExtension.findMany({
+    where: {
+      isHidden: false,
+      promotions: {
+        some: {
+          isActive: true,
+          OR: [{ endDate: null }, { endDate: { gte: new Date() } }],
+        },
+      },
+    },
+    include: {
+      promotions: {
+        where: {
+          isActive: true,
+          OR: [{ endDate: null }, { endDate: { gte: new Date() } }],
+        },
+      },
+      tags: true,
+    },
+    orderBy: { priority: "desc" },
+    take: limit,
+  });
+
+  if (extensionsWithPromotions.length === 0) {
+    return [];
+  }
+
+  // 2. Fetch all properties from API
+  const apiResponse = await fetchNainaHubProperties({ limit: 100 });
+
+  if (!apiResponse.success) {
+    return [];
+  }
+
+  // 3. Create lookup map for API properties
+  const apiPropertyMap = new Map(apiResponse.data.map((p) => [p.id, p]));
+
+  // 4. Merge and return (filter out sold/rented properties)
+  const propertiesWithPromotions: EnhancedProperty[] = [];
+  for (const ext of extensionsWithPromotions) {
+    const apiProperty = apiPropertyMap.get(ext.externalPropertyId);
+    if (apiProperty && apiProperty.status !== "sold" && apiProperty.status !== "rented") {
+      propertiesWithPromotions.push({
+        ...apiProperty,
+        extension: ext,
+      });
+    }
+  }
+
+  return propertiesWithPromotions;
+}
+
 // ============================================
 // Popular Properties
 // ============================================

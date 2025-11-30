@@ -69,7 +69,7 @@ export default function Header({ transparent = false }: HeaderProps) {
               >
                 Pariwat Property
               </span>
-              <span className={`text-[10px] tracking-[0.2em] uppercase transition-all duration-500 ${
+              <span className={`text-[8px] tracking-[0.2em] uppercase transition-all duration-500 ${
                 isScrolled ? "text-gray-500" : "text-white/80"
               }`}>
                 Premium Real Estate

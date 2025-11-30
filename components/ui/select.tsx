@@ -32,26 +32,72 @@ const SelectContext = React.createContext<{
   onValueChange: (value: string, label: string) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
+  setLabel: (label: string) => void;
 }>({
   value: "",
   label: "",
   onValueChange: () => {},
   open: false,
   setOpen: () => {},
+  setLabel: () => {},
 });
 
 export function Select({ value, onValueChange, children }: SelectProps) {
   const [open, setOpen] = React.useState(false);
   const [label, setLabel] = React.useState("");
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const prevValueRef = React.useRef(value);
 
   const handleValueChange = React.useCallback((newValue: string, newLabel: string) => {
     setLabel(newLabel);
     onValueChange(newValue);
   }, [onValueChange]);
 
+  // Reset label when value changes externally (e.g., reset filters)
+  React.useEffect(() => {
+    if (prevValueRef.current !== value) {
+      setLabel(""); // Reset so SelectItem can set the correct label
+      prevValueRef.current = value;
+    }
+  }, [value]);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    if (!open) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    // Use capture phase to ensure we catch the event before any other handlers
+    document.addEventListener("mousedown", handleClickOutside, true);
+    document.addEventListener("touchstart", handleClickOutside, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside, true);
+      document.removeEventListener("touchstart", handleClickOutside, true);
+    };
+  }, [open]);
+
+  // Close dropdown when pressing Escape
+  React.useEffect(() => {
+    if (!open) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [open]);
+
   return (
-    <SelectContext.Provider value={{ value, label, onValueChange: handleValueChange, open, setOpen }}>
-      <div className="relative">{children}</div>
+    <SelectContext.Provider value={{ value, label, onValueChange: handleValueChange, open, setOpen, setLabel }}>
+      <div ref={containerRef} className="relative">{children}</div>
     </SelectContext.Provider>
   );
 }
@@ -81,17 +127,19 @@ export function SelectValue({ placeholder }: SelectValueProps) {
 export function SelectContent({ children }: SelectContentProps) {
   const { open } = React.useContext(SelectContext);
 
-  if (!open) return null;
-
   return (
-    <div className="absolute z-50 mt-1 w-full rounded-md border border-gray-200 bg-white text-gray-900 shadow-lg">
+    <div
+      className={`absolute z-50 mt-1 w-full rounded-md border border-gray-200 bg-white text-gray-900 shadow-lg ${
+        open ? "visible opacity-100" : "invisible opacity-0 pointer-events-none"
+      }`}
+    >
       <div className="p-1">{children}</div>
     </div>
   );
 }
 
 export function SelectItem({ value, children }: SelectItemProps) {
-  const { value: selectedValue, onValueChange, setOpen } = React.useContext(SelectContext);
+  const { value: selectedValue, onValueChange, setOpen, setLabel, label } = React.useContext(SelectContext);
   const isSelected = selectedValue === value;
 
   const getTextContent = (node: React.ReactNode): string => {
@@ -106,6 +154,13 @@ export function SelectItem({ value, children }: SelectItemProps) {
     }
     return "";
   };
+
+  // Sync label when this item is selected (for pre-set values from URL params)
+  React.useEffect(() => {
+    if (isSelected && !label) {
+      setLabel(getTextContent(children));
+    }
+  }, [isSelected, label, setLabel, children]);
 
   return (
     <div
