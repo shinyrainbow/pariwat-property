@@ -51,6 +51,7 @@ export interface NainaHubProperty {
   projectCode: string;
   project: NainaHubProject;
   status: PropertyStatus;
+  updatedAt: string;
 }
 
 export interface NainaHubPagination {

@@ -22,7 +22,6 @@ import {
   Home,
   Layers,
   Calendar,
-  Eye,
   CheckCircle2,
   Star,
   MessageCircle,
@@ -596,12 +595,12 @@ export default function PropertyDetailPage() {
                       property.project.projectNameEn}
                   </div>
                 )}
-                <div className="flex items-center text-gray-600">
+                {/* <div className="flex items-center text-gray-600">
                   <MapPin className="w-5 h-5 mr-2 text-[#c6af6c]" />
                   {[property.address, property.district, property.province]
                     .filter(Boolean)
                     .join(", ")}
-                </div>
+                </div> */}
               </div>
 
               {/* Price */}
@@ -784,7 +783,7 @@ export default function PropertyDetailPage() {
                   </div>
                   <div className="mt-4 flex items-center justify-between">
                     <div className="text-sm text-gray-600">
-                      <span className="font-medium">ที่อยู่: </span>
+                      {/* <span className="font-medium">ที่อยู่: </span> */}
                       {[property.address, property.district, property.province]
                         .filter(Boolean)
                         .join(", ")}
@@ -802,20 +801,16 @@ export default function PropertyDetailPage() {
                 </Card>
               )}
 
-              {/* Stats */}
-              <div className="flex items-center gap-6 text-sm text-gray-500">
-                <div className="flex items-center gap-1">
-                  <Eye className="w-4 h-4" />
-                  <span>เข้าชม {property.views} ครั้ง</span>
-                </div>
-                <div className="flex items-center gap-1">
+              {/* Updated Date */}
+              {property.updatedAt && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
                   <Calendar className="w-4 h-4" />
                   <span>
                     อัปเดต{" "}
                     {new Date(property.updatedAt).toLocaleDateString("th-TH")}
                   </span>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Right Column - Contact Card */}
