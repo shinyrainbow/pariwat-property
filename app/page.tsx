@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,10 +16,52 @@ import { Bed, Bath, Maximize, MapPin, Search, Star, Phone, Mail, ChevronDown, Ch
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/layout/header";
+import Footer from "@/components/layout/footer";
+
+// Hero background images for slideshow
+const heroImages = [
+  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920",
+  "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1920",
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1920",
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1920",
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920",
+];
+
+interface Promotion {
+  id: string;
+  label: string;
+  type: string;
+  isActive: boolean;
+}
+
+interface PropertyTag {
+  id: string;
+  name: string;
+  color: string | null;
+}
+
+interface PropertyExtension {
+  id: string;
+  priority: number;
+  isHidden: boolean;
+  isFeaturedPopular: boolean;
+  promotions: Promotion[];
+  tags: PropertyTag[];
+}
+
+type PropertyStatus =
+  | "pending"
+  | "available"
+  | "reserved"
+  | "under_contract"
+  | "sold"
+  | "rented"
+  | "under_maintenance"
+  | "off_market";
 
 interface Property {
   id: string;
-  agentPropertyCode: string;
+  agentPropertyCode: string | null;
   propertyType: string;
   propertyTitleEn: string;
   propertyTitleTh: string;
@@ -34,25 +77,29 @@ interface Property {
   sellPriceNum: number | null;
   latitude: number | null;
   longitude: number | null;
-  status?: "active" | "inactive" | "sold" | "rented";
+  status: PropertyStatus;
   views?: number;
   project: {
     projectNameEn: string;
     projectNameTh: string;
   } | null;
+  extension?: PropertyExtension | null;
 }
 
-interface Location {
-  name: string;
+interface Project {
+  projectCode: string;
+  projectNameEn: string;
+  projectNameTh: string;
   count: number;
   image: string;
 }
 
 export default function PublicPropertiesPage() {
+  const router = useRouter();
   const [properties, setProperties] = useState<Property[]>([]);
   const [popularProperties, setPopularProperties] = useState<Property[]>([]);
   const [closedDeals, setClosedDeals] = useState<Property[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -62,6 +109,9 @@ export default function PublicPropertiesPage() {
   const popularSliderRef = useRef<HTMLDivElement>(null);
   const closedDealsSliderRef = useRef<HTMLDivElement>(null);
 
+  // Hero background slideshow
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
   // Filters
   const [propertyType, setPropertyType] = useState<string>("");
   const [listingType, setListingType] = useState<string>("");
@@ -69,11 +119,33 @@ export default function PublicPropertiesPage() {
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
 
+  // Handle search - navigate to /search with filters
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (propertyType && propertyType !== "all") params.set("propertyType", propertyType);
+    if (listingType && listingType !== "all") params.set("listingType", listingType);
+    if (bedrooms && bedrooms !== "all") params.set("bedrooms", bedrooms);
+    if (minPrice) params.set("minPrice", minPrice);
+    if (maxPrice) params.set("maxPrice", maxPrice);
+
+    const queryString = params.toString();
+    router.push(`/search${queryString ? `?${queryString}` : ""}`);
+  };
+
   // Scroll effect
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Hero background image slideshow
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Intersection observer for animations
@@ -109,7 +181,7 @@ export default function PublicPropertiesPage() {
         ...(maxPrice && { maxPrice }),
       });
 
-      const res = await fetch(`/api/public/properties?${params}`);
+      const res = await fetch(`/api/public/enhanced-properties?${params}`);
       const data = await res.json();
 
       if (data.success) {
@@ -127,25 +199,25 @@ export default function PublicPropertiesPage() {
     fetchProperties();
   }, [page, propertyType, listingType, bedrooms, minPrice, maxPrice]);
 
-  // Fetch popular properties, closed deals, and locations on mount
+  // Fetch popular properties, closed deals, and projects on mount
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const [popularRes, closedRes, locationsRes] = await Promise.all([
-          fetch("/api/public/popular"),
-          fetch("/api/public/closed-deals"),
-          fetch("/api/public/locations"),
+        const [popularRes, closedRes, projectsRes] = await Promise.all([
+          fetch("/api/public/enhanced-properties/popular"),
+          fetch("/api/public/enhanced-properties/closed-deals"),
+          fetch("/api/public/projects"),
         ]);
 
-        const [popularData, closedData, locationsData] = await Promise.all([
+        const [popularData, closedData, projectsData] = await Promise.all([
           popularRes.json(),
           closedRes.json(),
-          locationsRes.json(),
+          projectsRes.json(),
         ]);
 
         if (popularData.success) setPopularProperties(popularData.data);
         if (closedData.success) setClosedDeals(closedData.data);
-        if (locationsData.success) setLocations(locationsData.data);
+        if (projectsData.success) setProjects(projectsData.data);
       } catch (error) {
         console.error("Failed to fetch home data:", error);
       }
@@ -193,17 +265,24 @@ export default function PublicPropertiesPage() {
 
       {/* Hero Section with Parallax */}
       <div className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Parallax Background */}
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-75"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920')",
-            transform: `translateY(${scrollY * 0.5}px)`,
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
-        </div>
+        {/* Rotating Background Images */}
+        {heroImages.map((image, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 bg-cover bg-center transition-all duration-[2000ms] ease-in-out ${
+              index === currentImageIndex
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-105"
+            }`}
+            style={{
+              backgroundImage: `url('${image}')`,
+              transform: `translateY(${scrollY * 0.3}px)`,
+            }}
+          />
+        ))}
+
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
 
         {/* Animated Overlay Pattern */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NCAwLTE4IDguMDYtMTggMThzOC4wNiAxOCAxOCAxOCAxOC04LjA2IDE4LTE4LTguMDYtMTgtMTgtMTh6bS00LjUgMjcuNUMxOC42IDQzLjIgOCAzMi43IDggMjBjMC03LjcgNi4zLTE0IDE0LTE0czE0IDYuMyAxNCAxNC02LjMgMTQtMTQgMTR6IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9Ii4wNSIvPjwvZz48L3N2Zz4=')] opacity-20" />
@@ -230,7 +309,7 @@ export default function PublicPropertiesPage() {
             className="animate-fade-in-up"
             style={{ animation: "fadeInUp 1s ease-out 0.4s both" }}
           >
-            <Link href="/properties">
+            <Link href="/search">
               <Button
                 size="default"
                 className="bg-[#c6af6c] hover:bg-[#b39d5b] text-white px-6 py-4 rounded-full transform hover:scale-110 transition-all duration-300 shadow-2xl hover:shadow-[#c6af6c]/50"
@@ -283,24 +362,22 @@ export default function PublicPropertiesPage() {
         }}
         className="relative -mt-20 z-20"
       >
-        <div className="container mx-auto px-4 pb-12">
+        <div className="container mx-auto px-4 pb-10">
           <Card
-            className={`max-w-6xl mx-auto p-4 md:p-6 bg-white shadow-2xl rounded-2xl border-0 transition-all duration-1000 ${
+            className={`max-w-4xl mx-auto p-6 bg-white/95 backdrop-blur-md shadow-2xl rounded-2xl border-0 transition-all duration-1000 ${
               isVisible["search"]
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-10"
             }`}
           >
-            <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 text-center">
-              ค้นหาทรัพย์สินของคุณ
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+            {/* Row 1: Main filters */}
+            <div className="grid grid-cols-3 gap-4 mb-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">
                   ประเภทการตลาด
                 </label>
                 <Select value={listingType} onValueChange={setListingType}>
-                  <SelectTrigger className="h-9 text-sm border-gray-300">
+                  <SelectTrigger className="h-11 text-sm border-gray-200">
                     <SelectValue placeholder="ทั้งหมด" />
                   </SelectTrigger>
                   <SelectContent>
@@ -316,7 +393,7 @@ export default function PublicPropertiesPage() {
                   ประเภททรัพย์
                 </label>
                 <Select value={propertyType} onValueChange={setPropertyType}>
-                  <SelectTrigger className="h-9 text-sm border-gray-300">
+                  <SelectTrigger className="h-11 text-sm border-gray-200">
                     <SelectValue placeholder="ทั้งหมด" />
                   </SelectTrigger>
                   <SelectContent>
@@ -324,6 +401,7 @@ export default function PublicPropertiesPage() {
                     <SelectItem value="Condo">คอนโด</SelectItem>
                     <SelectItem value="Townhouse">ทาวน์เฮ้าส์</SelectItem>
                     <SelectItem value="SingleHouse">บ้านเดี่ยว</SelectItem>
+                    <SelectItem value="Land">ที่ดิน</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -333,7 +411,7 @@ export default function PublicPropertiesPage() {
                   ห้องนอน
                 </label>
                 <Select value={bedrooms} onValueChange={setBedrooms}>
-                  <SelectTrigger className="h-9 text-sm border-gray-300">
+                  <SelectTrigger className="h-11 text-sm border-gray-200">
                     <SelectValue placeholder="ไม่ระบุ" />
                   </SelectTrigger>
                   <SelectContent>
@@ -345,7 +423,10 @@ export default function PublicPropertiesPage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
+            {/* Row 2: Price range + Search button */}
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">
                   ราคาต่ำสุด (฿)
@@ -355,7 +436,7 @@ export default function PublicPropertiesPage() {
                   placeholder="ไม่ระบุ"
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
-                  className="h-9 text-sm border-gray-300"
+                  className="h-11 text-sm border-gray-200"
                 />
               </div>
 
@@ -368,48 +449,19 @@ export default function PublicPropertiesPage() {
                   placeholder="ไม่ระบุ"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
-                  className="h-9 text-sm border-gray-300"
+                  className="h-11 text-sm border-gray-200"
                 />
               </div>
 
-              <div className="flex items-end gap-2">
+              <div className="flex items-end">
                 <Button
-                  className="h-9 flex-1 bg-[#c6af6c] hover:bg-[#b39d5b] text-white text-sm font-medium transform hover:scale-105 transition-all duration-300"
-                  onClick={() => setPage(1)}
+                  className="h-11 w-full bg-[#c6af6c] hover:bg-[#b39d5b] text-white text-sm font-semibold transform hover:scale-105 transition-all duration-300"
+                  onClick={handleSearch}
                 >
                   <Search className="w-4 h-4 mr-2" />
                   ค้นหา
                 </Button>
-                <Button
-                  variant="outline"
-                  className="h-9 text-sm border-gray-300 hover:bg-gray-50"
-                  onClick={handleResetFilters}
-                >
-                  รีเซ็ต
-                </Button>
               </div>
-            </div>
-
-            {/* Quick Filters */}
-            <div className="flex flex-wrap justify-center gap-2 mt-4 pt-4 border-t border-gray-200">
-              {[
-                { label: "คอนโด", value: "Condo" },
-                { label: "ทาวน์เฮ้าส์", value: "Townhouse" },
-                { label: "บ้านเดี่ยว", value: "SingleHouse" },
-              ].map((type) => (
-                <Button
-                  key={type.value}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white transition-all duration-300 transform hover:scale-105"
-                  onClick={() => {
-                    setPropertyType(type.value);
-                    setPage(1);
-                  }}
-                >
-                  {type.label}
-                </Button>
-              ))}
             </div>
           </Card>
         </div>
@@ -489,10 +541,17 @@ export default function PublicPropertiesPage() {
                       </div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    <div className="absolute top-3 left-3 bg-[#c6af6c] text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3" />
-                      {property.views} views
-                    </div>
+                    {/* Promotion or Popular Badge */}
+                    {property.extension?.promotions && property.extension.promotions.length > 0 ? (
+                      <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold animate-pulse">
+                        {property.extension.promotions[0].label}
+                      </div>
+                    ) : (
+                      <div className="absolute top-3 left-3 bg-[#c6af6c] text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3" />
+                        Popular
+                      </div>
+                    )}
                     <div className="absolute bottom-3 left-3 right-3">
                       <p className="text-white font-bold text-lg line-clamp-1 drop-shadow-lg">
                         {property.rentalRateNum
@@ -620,7 +679,7 @@ export default function PublicPropertiesPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     <div className="absolute bottom-3 left-3 right-3">
                       <p className="text-white font-bold text-lg line-clamp-1 drop-shadow-lg">
-                        {property.sellPriceNum
+                        {property.status === "sold"
                           ? `฿${formatPrice(property.sellPriceNum)}`
                           : `฿${formatPrice(property.rentalRateNum)}/เดือน`}
                       </p>
@@ -658,11 +717,11 @@ export default function PublicPropertiesPage() {
         </div>
       </section>
 
-      {/* Locations Section */}
+      {/* Projects Section */}
       <section
-        id="locations"
+        id="projects"
         ref={(el) => {
-          observerRefs.current["locations"] = el;
+          observerRefs.current["projects"] = el;
         }}
         className="py-16 bg-white"
       >
@@ -670,26 +729,26 @@ export default function PublicPropertiesPage() {
           {/* Section Header */}
           <div
             className={`text-center mb-10 transition-all duration-1000 ${
-              isVisible["locations"]
+              isVisible["projects"]
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-10"
             }`}
           >
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-              ค้นหาตามทำเล
+              โครงการยอดนิยม
             </h2>
             <div className="w-16 h-1 bg-[#c6af6c] mx-auto mb-3"></div>
-            <p className="text-gray-600">เลือกทำเลที่คุณสนใจเพื่อค้นหาทรัพย์สิน</p>
+            <p className="text-gray-600">เลือกโครงการที่คุณสนใจเพื่อค้นหาทรัพย์สิน</p>
           </div>
 
-          {/* Locations Grid */}
+          {/* Projects Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {locations.map((location, index) => (
+            {projects.map((project, index) => (
               <Link
-                key={location.name}
-                href={`/search?location=${encodeURIComponent(location.name)}`}
+                key={project.projectCode}
+                href={`/search?project=${encodeURIComponent(project.projectCode)}`}
                 className={`group transition-all duration-500 ${
-                  isVisible["locations"]
+                  isVisible["projects"]
                     ? "opacity-100 translate-y-0"
                     : "opacity-0 translate-y-10"
                 }`}
@@ -697,16 +756,16 @@ export default function PublicPropertiesPage() {
               >
                 <Card className="relative overflow-hidden rounded-xl h-40 cursor-pointer border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105">
                   <Image
-                    src={location.image}
-                    alt={location.name}
+                    src={project.image}
+                    alt={project.projectNameTh || project.projectNameEn}
                     fill
                     className="object-cover group-hover:scale-110 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent group-hover:from-black/90 transition-all duration-300" />
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
-                    <MapPin className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform duration-300" />
-                    <h3 className="font-bold text-lg text-center">{location.name}</h3>
-                    <p className="text-sm text-gray-200">{location.count} ทรัพย์สิน</p>
+                    <Building2 className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform duration-300" />
+                    <h3 className="font-bold text-lg text-center line-clamp-2">{project.projectNameTh || project.projectNameEn}</h3>
+                    <p className="text-sm text-gray-200">{project.count} ทรัพย์สิน</p>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#c6af6c] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 </Card>
@@ -714,14 +773,14 @@ export default function PublicPropertiesPage() {
             ))}
           </div>
 
-          {/* View All Locations Button */}
+          {/* View All Projects Button */}
           <div className="text-center mt-8">
             <Link href="/search">
               <Button
                 variant="outline"
                 className="border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white px-8 transform hover:scale-105 transition-all duration-300"
               >
-                ดูทำเลทั้งหมด
+                ดูโครงการทั้งหมด
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>
@@ -949,19 +1008,29 @@ export default function PublicPropertiesPage() {
                       {/* Gradient Overlay on Hover */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                      {/* Listing Type Badge */}
-                      {property.rentalRateNum && property.rentalRateNum > 0 && (
-                        <div className="absolute top-2 right-2 bg-emerald-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm transform group-hover:scale-110 transition-transform duration-300">
-                          เช่า
+                      {/* Promotion Badge */}
+                      {property.extension?.promotions && property.extension.promotions.length > 0 && (
+                        <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm transform group-hover:scale-110 transition-transform duration-300 animate-pulse">
+                          {property.extension.promotions[0].label}
                         </div>
                       )}
-                      {property.sellPriceNum &&
-                        property.sellPriceNum > 0 &&
-                        !property.rentalRateNum && (
-                          <div className="absolute top-2 right-2 bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm transform group-hover:scale-110 transition-transform duration-300">
-                            ขาย
-                          </div>
-                        )}
+                      {/* Listing Type Badge - only show if no promotion */}
+                      {(!property.extension?.promotions || property.extension.promotions.length === 0) && (
+                        <>
+                          {property.rentalRateNum && property.rentalRateNum > 0 && (
+                            <div className="absolute top-2 right-2 bg-emerald-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm transform group-hover:scale-110 transition-transform duration-300">
+                              เช่า
+                            </div>
+                          )}
+                          {property.sellPriceNum &&
+                            property.sellPriceNum > 0 &&
+                            !property.rentalRateNum && (
+                              <div className="absolute top-2 right-2 bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm transform group-hover:scale-110 transition-transform duration-300">
+                                ขาย
+                              </div>
+                            )}
+                        </>
+                      )}
 
                       {/* Property Type Badge */}
                       <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-md text-gray-800 px-2 py-1 rounded-full text-xs font-semibold shadow-lg">
@@ -969,6 +1038,8 @@ export default function PublicPropertiesPage() {
                           ? "คอนโด"
                           : property.propertyType === "Townhouse"
                           ? "ทาวน์เฮ้าส์"
+                          : property.propertyType === "Land"
+                          ? "ที่ดิน"
                           : "บ้านเดี่ยว"}
                       </div>
 
@@ -1047,9 +1118,24 @@ export default function PublicPropertiesPage() {
                           )}
                       </div>
 
+                      {/* Tags */}
+                      {property.extension?.tags && property.extension.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {property.extension.tags.slice(0, 3).map((tag) => (
+                            <span
+                              key={tag.id}
+                              className="px-2 py-0.5 rounded-full text-xs font-medium text-white"
+                              style={{ backgroundColor: tag.color || "#3B82F6" }}
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
                       {/* Property Code */}
                       <div className="text-xs text-gray-400 mt-2">
-                        รหัส: {property.agentPropertyCode}
+                        รหัส: {property.agentPropertyCode || "-"}
                       </div>
                     </div>
                   </Card>
@@ -1298,20 +1384,7 @@ export default function PublicPropertiesPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Building2 className="w-8 h-8 text-[#c6af6c]" />
-            <span className="text-xl font-bold text-white">
-              Pariwat Property
-            </span>
-          </div>
-          <p className="mb-2 text-sm">
-            Premium Real Estate Solutions | Bangkok, Thailand
-          </p>
-          <p className="text-xs">© 2025 NainaHub Properties. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
 
       {/* CSS Animations */}
       <style jsx>{`

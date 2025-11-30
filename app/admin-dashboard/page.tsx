@@ -4,122 +4,104 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Building2,
   Home,
-  Eye,
-  TrendingUp,
-  Plus,
-  ArrowRight,
-  CheckCircle,
-  Clock,
-  XCircle,
+  Tag,
   Star,
+  MessageSquare,
+  CheckCircle,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 
 interface DashboardData {
   stats: {
     totalProperties: number;
-    activeProperties: number;
-    rentedProperties: number;
-    soldProperties: number;
-    totalViews: number;
     forRent: number;
     forSale: number;
-    featured: number;
+    popular: number;
+    closedDeals: number;
+    activePromotions: number;
+    withPromotions: number;
+    pendingReviews: number;
+    publishedReviews: number;
   };
   recentProperties: Array<{
     id: string;
     propertyTitleTh: string;
+    propertyTitleEn: string;
     propertyType: string;
-    status: string;
-    createdAt: string;
     agentPropertyCode: string;
+    rentalRateNum: number;
+    sellPriceNum: number;
+    imageUrl: string | null;
+    project: {
+      projectNameTh: string;
+      projectNameEn: string;
+    } | null;
   }>;
-  topViewed: Array<{
+  propertyTypeDistribution: Record<string, number>;
+  listingDistribution: {
+    rent: number;
+    sale: number;
+    both: number;
+  };
+  propertiesWithPromotions: Array<{
     id: string;
     propertyTitleTh: string;
-    views: number;
-    agentPropertyCode: string;
+    propertyType: string;
+    imageUrl: string | null;
   }>;
-  propertyTypeDistribution: {
-    Condo: number;
-    Townhouse: number;
-    SingleHouse: number;
-  };
-  statusDistribution: {
-    active: number;
-    inactive: number;
-    sold: number;
-    rented: number;
-  };
 }
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
   const fetchDashboardData = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/admin/dashboard");
       const result = await res.json();
       if (result.success) {
         setData(result.data);
+      } else {
+        setError(result.error || "Failed to load data");
       }
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
+    } catch (err) {
+      console.error("Failed to fetch dashboard data:", err);
+      setError("เกิดข้อผิดพลาดในการโหลดข้อมูล");
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("th-TH", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+  const formatPrice = (price: number) => {
+    if (price >= 1000000) {
+      return `${(price / 1000000).toFixed(1)}M`;
+    }
+    if (price >= 1000) {
+      return `${(price / 1000).toFixed(0)}K`;
+    }
+    return price.toLocaleString();
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<
-      string,
-      { label: string; className: string; icon: React.ReactNode }
-    > = {
-      active: {
-        label: "Active",
-        className: "bg-green-100 text-green-800",
-        icon: <CheckCircle className="w-3 h-3" />,
-      },
-      inactive: {
-        label: "Inactive",
-        className: "bg-gray-100 text-gray-800",
-        icon: <XCircle className="w-3 h-3" />,
-      },
-      sold: {
-        label: "Sold",
-        className: "bg-blue-100 text-blue-800",
-        icon: <CheckCircle className="w-3 h-3" />,
-      },
-      rented: {
-        label: "Rented",
-        className: "bg-purple-100 text-purple-800",
-        icon: <Clock className="w-3 h-3" />,
-      },
+  const getPropertyTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      Condo: "คอนโด",
+      Townhouse: "ทาวน์เฮ้าส์",
+      SingleHouse: "บ้านเดี่ยว",
+      Land: "ที่ดิน",
     };
-    const config = statusConfig[status] || statusConfig.inactive;
-    return (
-      <span
-        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.className}`}
-      >
-        {config.icon}
-        {config.label}
-      </span>
-    );
+    return labels[type] || type;
   };
 
   if (loading) {
@@ -138,10 +120,10 @@ export default function AdminDashboardPage() {
     );
   }
 
-  if (!data) {
+  if (error || !data) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Failed to load dashboard data</p>
+        <p className="text-gray-500">{error || "Failed to load dashboard data"}</p>
         <Button onClick={fetchDashboardData} className="mt-4">
           ลองอีกครั้ง
         </Button>
@@ -155,28 +137,28 @@ export default function AdminDashboardPage() {
       value: data.stats.totalProperties,
       icon: Building2,
       color: "bg-blue-500",
-      change: "+12%",
+      href: "/admin-dashboard/properties",
     },
     {
-      label: "ทรัพย์สินที่ Active",
-      value: data.stats.activeProperties,
-      icon: Home,
-      color: "bg-green-500",
-      change: "+8%",
-    },
-    {
-      label: "ยอดเข้าชมทั้งหมด",
-      value: data.stats.totalViews,
-      icon: Eye,
-      color: "bg-purple-500",
-      change: "+25%",
-    },
-    {
-      label: "ทรัพย์สินแนะนำ",
-      value: data.stats.featured,
+      label: "ยอดนิยม",
+      value: data.stats.popular,
       icon: Star,
       color: "bg-amber-500",
-      change: "+5%",
+      href: "/admin-dashboard/properties?filter=popular",
+    },
+    {
+      label: "โปรโมชันที่ใช้งาน",
+      value: data.stats.activePromotions,
+      icon: Tag,
+      color: "bg-purple-500",
+      href: "/admin-dashboard/promotions",
+    },
+    {
+      label: "รีวิวรอตรวจสอบ",
+      value: data.stats.pendingReviews,
+      icon: MessageSquare,
+      color: "bg-orange-500",
+      href: "/admin-dashboard/reviews",
     },
   ];
 
@@ -189,69 +171,67 @@ export default function AdminDashboardPage() {
             ยินดีต้อนรับสู่แดชบอร์ด
           </h1>
           <p className="text-gray-600 mt-1">
-            ภาพรวมของทรัพย์สินและสถิติการใช้งาน
+            ข้อมูลจริงจาก NainaHub API และระบบภายใน
           </p>
         </div>
-        <Link href="/admin-dashboard/properties/new">
-          <Button className="bg-[#c6af6c] hover:bg-[#b39d5b] text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            เพิ่มทรัพย์สินใหม่
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1.5 rounded-full">
+          <CheckCircle className="w-4 h-4" />
+          <span>เชื่อมต่อ API สำเร็จ</span>
+        </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat, index) => (
-          <Card
-            key={index}
-            className="p-6 hover:shadow-lg transition-shadow duration-300"
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-600">{stat.label}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {stat.value.toLocaleString()}
-                </p>
-                <div className="flex items-center gap-1 mt-2">
-                  <TrendingUp className="w-4 h-4 text-green-500" />
-                  <span className="text-sm text-green-600">{stat.change}</span>
-                  <span className="text-xs text-gray-500">vs last month</span>
+          <Link key={index} href={stat.href}>
+            <Card className="p-6 hover:shadow-lg transition-shadow duration-300 cursor-pointer">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">{stat.label}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">
+                    {stat.value.toLocaleString()}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-lg ${stat.color}`}>
+                  <stat.icon className="w-6 h-6 text-white" />
                 </div>
               </div>
-              <div className={`p-3 rounded-lg ${stat.color}`}>
-                <stat.icon className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
         ))}
       </div>
 
       {/* Quick Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-[#c6af6c]">
+          <p className="text-2xl font-bold text-emerald-600">
             {data.stats.forRent}
           </p>
           <p className="text-sm text-gray-600">ให้เช่า</p>
         </Card>
         <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-[#c6af6c]">
+          <p className="text-2xl font-bold text-amber-600">
             {data.stats.forSale}
           </p>
           <p className="text-sm text-gray-600">ขาย</p>
         </Card>
         <Card className="p-4 text-center">
           <p className="text-2xl font-bold text-purple-600">
-            {data.stats.rentedProperties}
+            {data.listingDistribution.both}
           </p>
-          <p className="text-sm text-gray-600">ปล่อยเช่าแล้ว</p>
+          <p className="text-sm text-gray-600">ขาย/เช่า</p>
         </Card>
         <Card className="p-4 text-center">
           <p className="text-2xl font-bold text-blue-600">
-            {data.stats.soldProperties}
+            {data.stats.closedDeals}
           </p>
-          <p className="text-sm text-gray-600">ขายแล้ว</p>
+          <p className="text-sm text-gray-600">ปิดการขาย</p>
+        </Card>
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold text-green-600">
+            {data.stats.publishedReviews}
+          </p>
+          <p className="text-sm text-gray-600">รีวิวที่เผยแพร่</p>
         </Card>
       </div>
 
@@ -271,23 +251,27 @@ export default function AdminDashboardPage() {
                   Condo: "คอนโด",
                   Townhouse: "ทาวน์เฮ้าส์",
                   SingleHouse: "บ้านเดี่ยว",
+                  Land: "ที่ดิน",
                 };
                 const colors: Record<string, string> = {
                   Condo: "bg-blue-500",
                   Townhouse: "bg-green-500",
                   SingleHouse: "bg-purple-500",
+                  Land: "bg-amber-500",
                 };
                 return (
                   <div key={type}>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-700">{labels[type]}</span>
+                      <span className="text-gray-700">
+                        {labels[type] || type}
+                      </span>
                       <span className="text-gray-500">
                         {count} ({percentage.toFixed(0)}%)
                       </span>
                     </div>
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
-                        className={`h-full ${colors[type]} rounded-full transition-all duration-500`}
+                        className={`h-full ${colors[type] || "bg-gray-400"} rounded-full transition-all duration-500`}
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
@@ -298,35 +282,59 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        {/* Status Distribution */}
+        {/* Listing Distribution */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            สถานะทรัพย์สิน
+            ประเภทการลงประกาศ
           </h3>
-          <div className="grid grid-cols-2 gap-4">
-            {Object.entries(data.statusDistribution).map(([status, count]) => {
-              const labels: Record<string, string> = {
-                active: "Active",
-                inactive: "Inactive",
-                sold: "ขายแล้ว",
-                rented: "ปล่อยเช่าแล้ว",
-              };
-              const colors: Record<string, string> = {
-                active: "bg-green-100 text-green-800 border-green-200",
-                inactive: "bg-gray-100 text-gray-800 border-gray-200",
-                sold: "bg-blue-100 text-blue-800 border-blue-200",
-                rented: "bg-purple-100 text-purple-800 border-purple-200",
-              };
-              return (
-                <div
-                  key={status}
-                  className={`p-4 rounded-lg border ${colors[status]}`}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="p-4 rounded-lg border bg-emerald-50 border-emerald-200 text-center">
+              <p className="text-3xl font-bold text-emerald-600">
+                {data.listingDistribution.rent}
+              </p>
+              <p className="text-sm text-emerald-700 mt-1">เช่า</p>
+            </div>
+            <div className="p-4 rounded-lg border bg-amber-50 border-amber-200 text-center">
+              <p className="text-3xl font-bold text-amber-600">
+                {data.listingDistribution.sale}
+              </p>
+              <p className="text-sm text-amber-700 mt-1">ขาย</p>
+            </div>
+            <div className="p-4 rounded-lg border bg-purple-50 border-purple-200 text-center">
+              <p className="text-3xl font-bold text-purple-600">
+                {data.listingDistribution.both}
+              </p>
+              <p className="text-sm text-purple-700 mt-1">ขาย/เช่า</p>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="mt-6 pt-4 border-t">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">
+              การดำเนินการด่วน
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              <Link href="/admin-dashboard/promotions">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start"
                 >
-                  <p className="text-2xl font-bold">{count}</p>
-                  <p className="text-sm">{labels[status]}</p>
-                </div>
-              );
-            })}
+                  <Tag className="w-4 h-4 mr-2" />
+                  จัดการโปรโมชัน
+                </Button>
+              </Link>
+              <Link href="/admin-dashboard/reviews">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  จัดการรีวิว
+                </Button>
+              </Link>
+            </div>
           </div>
         </Card>
       </div>
@@ -337,7 +345,7 @@ export default function AdminDashboardPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">
-              ทรัพย์สินล่าสุด
+              ทรัพย์สินล่าสุดจาก API
             </h3>
             <Link
               href="/admin-dashboard/properties"
@@ -351,67 +359,108 @@ export default function AdminDashboardPage() {
             {data.recentProperties.map((property) => (
               <Link
                 key={property.id}
-                href={`/admin-dashboard/properties/${property.id}`}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                href={`/property/${property.id}`}
+                target="_blank"
+                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
+                {/* Thumbnail */}
+                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                  {property.imageUrl ? (
+                    <Image
+                      src={property.imageUrl}
+                      alt={property.propertyTitleTh}
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Home className="w-5 h-5 text-gray-400" />
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    {property.propertyTitleTh}
+                    {property.propertyTitleTh || property.propertyTitleEn}
                   </p>
                   <p className="text-xs text-gray-500">
                     {property.agentPropertyCode} •{" "}
-                    {formatDate(property.createdAt)}
+                    {getPropertyTypeLabel(property.propertyType)}
                   </p>
                 </div>
-                {getStatusBadge(property.status)}
+                <div className="text-right">
+                  {property.rentalRateNum > 0 && (
+                    <p className="text-sm font-semibold text-emerald-600">
+                      ฿{formatPrice(property.rentalRateNum)}/ด.
+                    </p>
+                  )}
+                  {property.sellPriceNum > 0 && (
+                    <p className="text-sm font-semibold text-amber-600">
+                      ฿{formatPrice(property.sellPriceNum)}
+                    </p>
+                  )}
+                </div>
               </Link>
             ))}
           </div>
         </Card>
 
-        {/* Top Viewed */}
+        {/* Properties with Promotions */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">
-              ยอดเข้าชมสูงสุด
+              ทรัพย์สินที่มีโปรโมชัน
             </h3>
-            <Eye className="w-5 h-5 text-gray-400" />
+            <Sparkles className="w-5 h-5 text-amber-500" />
           </div>
-          <div className="space-y-3">
-            {data.topViewed.map((property, index) => (
-              <Link
-                key={property.id}
-                href={`/admin-dashboard/properties/${property.id}`}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                    index === 0
-                      ? "bg-yellow-500"
-                      : index === 1
-                      ? "bg-gray-400"
-                      : index === 2
-                      ? "bg-amber-600"
-                      : "bg-gray-300"
-                  }`}
+          {data.propertiesWithPromotions.length > 0 ? (
+            <div className="space-y-3">
+              {data.propertiesWithPromotions.map((property) => (
+                <Link
+                  key={property.id}
+                  href={`/property/${property.id}`}
+                  target="_blank"
+                  className="flex items-center gap-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg hover:from-amber-100 hover:to-orange-100 transition-colors border border-amber-200"
                 >
-                  {index + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {property.propertyTitleTh}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {property.agentPropertyCode}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 text-gray-600">
-                  <Eye className="w-4 h-4" />
-                  <span className="text-sm font-medium">{property.views}</span>
-                </div>
+                  {/* Thumbnail */}
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                    {property.imageUrl ? (
+                      <Image
+                        src={property.imageUrl}
+                        alt={property.propertyTitleTh}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Home className="w-5 h-5 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {property.propertyTitleTh}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {getPropertyTypeLabel(property.propertyType)}
+                    </p>
+                  </div>
+                  <Tag className="w-5 h-5 text-amber-500" />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Tag className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">ยังไม่มีทรัพย์สินที่มีโปรโมชัน</p>
+              <Link href="/admin-dashboard/promotions">
+                <Button size="sm" className="mt-3 bg-[#c6af6c] hover:bg-[#b39d5b]">
+                  เพิ่มโปรโมชัน
+                </Button>
               </Link>
-            ))}
-          </div>
+            </div>
+          )}
         </Card>
       </div>
     </div>

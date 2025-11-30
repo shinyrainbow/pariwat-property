@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { getDashboardStats, getProperties } from "@/lib/data";
+import { fetchNainaHubProperties } from "@/lib/nainahub";
+import { prisma } from "@/lib/prisma";
 
-// GET /api/admin/dashboard - Get dashboard statistics
+// GET /api/admin/dashboard - Get dashboard statistics from real data
 export async function GET() {
   const session = await getServerSession(authOptions);
 
@@ -11,46 +12,155 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const stats = getDashboardStats();
-  const properties = getProperties();
+  try {
+    // Fetch real properties from NainaHub API
+    const apiResponse = await fetchNainaHubProperties({ limit: 100 });
 
-  // Get recent properties (last 5)
-  const recentProperties = [...properties]
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
-    .slice(0, 5);
+    if (!apiResponse.success) {
+      return NextResponse.json(
+        { error: "Failed to fetch properties from API" },
+        { status: 500 }
+      );
+    }
 
-  // Get top viewed properties
-  const topViewed = [...properties]
-    .sort((a, b) => b.views - a.views)
-    .slice(0, 5);
+    const properties = apiResponse.data;
+    const totalFromApi = apiResponse.pagination.total;
 
-  // Property type distribution
-  const propertyTypeDistribution = {
-    Condo: properties.filter((p) => p.propertyType === "Condo").length,
-    Townhouse: properties.filter((p) => p.propertyType === "Townhouse").length,
-    SingleHouse: properties.filter((p) => p.propertyType === "SingleHouse")
-      .length,
-  };
+    // Count closed deals from API status
+    const closedDealsCount = properties.filter(
+      (p) => p.status === "sold" || p.status === "rented"
+    ).length;
 
-  // Status distribution
-  const statusDistribution = {
-    active: properties.filter((p) => p.status === "active").length,
-    inactive: properties.filter((p) => p.status === "inactive").length,
-    sold: properties.filter((p) => p.status === "sold").length,
-    rented: properties.filter((p) => p.status === "rented").length,
-  };
+    // Get local extension stats
+    const [
+      popularCount,
+      activePromotionsCount,
+      reviewStats,
+      extensionsWithPromotions,
+    ] = await Promise.all([
+      // Popular properties count (exclude sold/rented properties)
+      prisma.propertyExtension.count({
+        where: {
+          isFeaturedPopular: true,
+          isHidden: false,
+        },
+      }),
+      // Active promotions count
+      prisma.promotion.count({
+        where: {
+          isActive: true,
+          OR: [{ endDate: null }, { endDate: { gte: new Date() } }],
+        },
+      }),
+      // Review stats
+      prisma.review.groupBy({
+        by: ["status"],
+        _count: true,
+      }),
+      // Properties with promotions
+      prisma.propertyExtension.findMany({
+        where: {
+          promotions: {
+            some: {
+              isActive: true,
+              OR: [{ endDate: null }, { endDate: { gte: new Date() } }],
+            },
+          },
+        },
+        select: { externalPropertyId: true },
+      }),
+    ]);
 
-  return NextResponse.json({
-    success: true,
-    data: {
-      stats,
-      recentProperties,
-      topViewed,
-      propertyTypeDistribution,
-      statusDistribution,
-    },
-  });
+    // Calculate stats from API data
+    const stats = {
+      totalProperties: totalFromApi,
+      forRent: properties.filter(
+        (p) => p.rentalRateNum && p.rentalRateNum > 0
+      ).length,
+      forSale: properties.filter(
+        (p) => p.sellPriceNum && p.sellPriceNum > 0
+      ).length,
+      popular: popularCount,
+      closedDeals: closedDealsCount,
+      activePromotions: activePromotionsCount,
+      withPromotions: extensionsWithPromotions.length,
+      pendingReviews:
+        reviewStats.find((r) => r.status === "pending")?._count || 0,
+      publishedReviews:
+        reviewStats.find((r) => r.status === "published")?._count || 0,
+    };
+
+    // Property type distribution from real data
+    const propertyTypeDistribution: Record<string, number> = {
+      Condo: 0,
+      Townhouse: 0,
+      SingleHouse: 0,
+      Land: 0,
+    };
+
+    properties.forEach((p) => {
+      if (propertyTypeDistribution[p.propertyType] !== undefined) {
+        propertyTypeDistribution[p.propertyType]++;
+      }
+    });
+
+    // Listing type distribution
+    const listingDistribution = {
+      rent: properties.filter((p) => p.rentalRateNum && p.rentalRateNum > 0)
+        .length,
+      sale: properties.filter((p) => p.sellPriceNum && p.sellPriceNum > 0)
+        .length,
+      both: properties.filter(
+        (p) =>
+          p.rentalRateNum &&
+          p.rentalRateNum > 0 &&
+          p.sellPriceNum &&
+          p.sellPriceNum > 0
+      ).length,
+    };
+
+    // Recent properties (first 5 from API)
+    const recentProperties = properties.slice(0, 5).map((p) => ({
+      id: p.id,
+      propertyTitleTh: p.propertyTitleTh,
+      propertyTitleEn: p.propertyTitleEn,
+      propertyType: p.propertyType,
+      agentPropertyCode: p.agentPropertyCode || p.projectPropertyCode || "-",
+      rentalRateNum: p.rentalRateNum,
+      sellPriceNum: p.sellPriceNum,
+      imageUrl: p.imageUrls?.[0] || null,
+      project: p.project,
+    }));
+
+    // Properties with promotions (get details from API)
+    const promoPropertyIds = new Set(
+      extensionsWithPromotions.map((e) => e.externalPropertyId)
+    );
+    const propertiesWithPromotions = properties
+      .filter((p) => promoPropertyIds.has(p.id))
+      .slice(0, 5)
+      .map((p) => ({
+        id: p.id,
+        propertyTitleTh: p.propertyTitleTh,
+        propertyType: p.propertyType,
+        imageUrl: p.imageUrls?.[0] || null,
+      }));
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        stats,
+        recentProperties,
+        propertyTypeDistribution,
+        listingDistribution,
+        propertiesWithPromotions,
+      },
+    });
+  } catch (error) {
+    console.error("Dashboard API error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch dashboard data" },
+      { status: 500 }
+    );
+  }
 }

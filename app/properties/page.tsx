@@ -193,6 +193,7 @@ export default function PropertiesPage() {
                       <SelectItem value="Condo">คอนโด</SelectItem>
                       <SelectItem value="Townhouse">ทาวน์เฮ้าส์</SelectItem>
                       <SelectItem value="SingleHouse">บ้านเดี่ยว</SelectItem>
+                      <SelectItem value="Land">ที่ดิน</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -392,6 +393,8 @@ export default function PropertiesPage() {
                                   ? "คอนโด"
                                   : property.propertyType === "Townhouse"
                                   ? "ทาวน์เฮ้าส์"
+                                  : property.propertyType === "Land"
+                                  ? "ที่ดิน"
                                   : "บ้านเดี่ยว"}
                               </span>
                             </div>
@@ -516,6 +519,8 @@ export default function PropertiesPage() {
                                     ? "คอนโด"
                                     : property.propertyType === "Townhouse"
                                     ? "ทาวน์เฮ้าส์"
+                                    : property.propertyType === "Land"
+                                    ? "ที่ดิน"
                                     : "บ้านเดี่ยว"}
                                 </span>
                                 <span className="text-xs text-gray-400">
@@ -685,6 +690,7 @@ export default function PropertiesPage() {
                     <SelectItem value="Condo">คอนโด</SelectItem>
                     <SelectItem value="Townhouse">ทาวน์เฮ้าส์</SelectItem>
                     <SelectItem value="SingleHouse">บ้านเดี่ยว</SelectItem>
+                    <SelectItem value="Land">ที่ดิน</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -762,7 +768,7 @@ export default function PropertiesPage() {
             </span>
           </div>
           <p className="mb-2 text-sm">
-            Premium Real Estate Solutions | Bangkok, Thailand
+            Premium Real Estate Solutions | Chachoengsao, Thailand
           </p>
           <p className="text-xs">
             © 2025 Pariwat Property. All rights reserved.

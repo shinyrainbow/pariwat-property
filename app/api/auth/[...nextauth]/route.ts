@@ -1,12 +1,14 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
-import FacebookProvider from "next-auth/providers/facebook";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import type { Adapter } from "next-auth/adapters";
+import { prisma } from "@/lib/prisma";
 import * as bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma) as Adapter,
+
   providers: [
-    // Email/Password Authentication
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -18,44 +20,29 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Please enter email and password");
         }
 
-        // TODO: Replace this with actual database lookup
-        // This is a demo implementation - you should query your database here
-        // Example:
-        // const user = await prisma.user.findUnique({
-        //   where: { email: credentials.email }
-        // });
+        // Find user in database
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email }
+        });
 
-        // For demo purposes, check against environment variable
-        const demoEmail = process.env.DEMO_USER_EMAIL || "demo@example.com";
-        const demoPassword = process.env.DEMO_USER_PASSWORD || "demo123";
-
-        if (credentials.email === demoEmail) {
-          const isValid = await bcrypt.compare(credentials.password,
-            await bcrypt.hash(demoPassword, 10));
-
-          if (isValid || credentials.password === demoPassword) {
-            return {
-              id: "1",
-              email: credentials.email,
-              name: "Demo User",
-            };
-          }
+        if (!user || !user.password) {
+          throw new Error("Invalid email or password");
         }
 
-        throw new Error("Invalid email or password");
+        // Verify password
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+
+        if (!isValid) {
+          throw new Error("Invalid email or password");
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
       }
-    }),
-
-    // Google OAuth
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    }),
-
-    // Facebook OAuth
-    FacebookProvider({
-      clientId: process.env.FACEBOOK_CLIENT_ID || "",
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET || "",
     }),
   ],
 
@@ -70,13 +57,11 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
-      }
-      if (account) {
-        token.provider = account.provider;
+        token.role = user.role;
       }
       return token;
     },
@@ -84,6 +69,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
+        session.user.role = token.role as string;
       }
       return session;
     },

@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { User, Mail, Lock, Bell, Shield, Save } from "lucide-react";
+import { User, Mail, Lock, Bell, Shield, Save, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -23,6 +23,18 @@ export default function SettingsPage() {
     emailWeeklyReport: true,
   });
 
+  // Password change state
+  const [passwords, setPasswords] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
   const handleSaveProfile = async () => {
     setSaving(true);
     // Simulate API call
@@ -30,6 +42,48 @@ export default function SettingsPage() {
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
+  };
+
+  const handleChangePassword = async () => {
+    // Client-side validation
+    if (!passwords.currentPassword || !passwords.newPassword || !passwords.confirmPassword) {
+      setPasswordMessage({ type: "error", text: "กรุณากรอกข้อมูลให้ครบทุกช่อง" });
+      return;
+    }
+
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      setPasswordMessage({ type: "error", text: "รหัสผ่านใหม่ไม่ตรงกัน" });
+      return;
+    }
+
+    if (passwords.newPassword.length < 6) {
+      setPasswordMessage({ type: "error", text: "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร" });
+      return;
+    }
+
+    setChangingPassword(true);
+    setPasswordMessage(null);
+
+    try {
+      const res = await fetch("/api/admin/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(passwords),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setPasswordMessage({ type: "success", text: "เปลี่ยนรหัสผ่านสำเร็จ" });
+        setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      } else {
+        setPasswordMessage({ type: "error", text: data.error || "เกิดข้อผิดพลาด" });
+      }
+    } catch (error) {
+      setPasswordMessage({ type: "error", text: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง" });
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   return (
@@ -119,34 +173,94 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {passwordMessage && (
+          <div
+            className={`flex items-center gap-2 p-3 rounded-lg mb-4 ${
+              passwordMessage.type === "success"
+                ? "bg-green-50 text-green-800"
+                : "bg-red-50 text-red-800"
+            }`}
+          >
+            {passwordMessage.type === "success" ? (
+              <CheckCircle className="w-4 h-4" />
+            ) : (
+              <AlertCircle className="w-4 h-4" />
+            )}
+            <span className="text-sm">{passwordMessage.text}</span>
+          </div>
+        )}
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               รหัสผ่านปัจจุบัน
             </label>
-            <Input type="password" placeholder="••••••••" />
+            <Input
+              type="password"
+              placeholder="••••••••"
+              value={passwords.currentPassword}
+              onChange={(e) =>
+                setPasswords((prev) => ({
+                  ...prev,
+                  currentPassword: e.target.value,
+                }))
+              }
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               รหัสผ่านใหม่
             </label>
-            <Input type="password" placeholder="••••••••" />
+            <Input
+              type="password"
+              placeholder="••••••••"
+              value={passwords.newPassword}
+              onChange={(e) =>
+                setPasswords((prev) => ({
+                  ...prev,
+                  newPassword: e.target.value,
+                }))
+              }
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               ยืนยันรหัสผ่านใหม่
             </label>
-            <Input type="password" placeholder="••••••••" />
+            <Input
+              type="password"
+              placeholder="••••••••"
+              value={passwords.confirmPassword}
+              onChange={(e) =>
+                setPasswords((prev) => ({
+                  ...prev,
+                  confirmPassword: e.target.value,
+                }))
+              }
+            />
           </div>
 
-          <Button variant="outline">เปลี่ยนรหัสผ่าน</Button>
+          <Button
+            variant="outline"
+            onClick={handleChangePassword}
+            disabled={changingPassword}
+          >
+            {changingPassword ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                กำลังเปลี่ยน...
+              </>
+            ) : (
+              "เปลี่ยนรหัสผ่าน"
+            )}
+          </Button>
         </div>
       </Card>
 
       {/* Notification Settings */}
-      <Card className="p-6">
+      {/* <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-[#c6af6c]/10 rounded-lg">
             <Bell className="w-5 h-5 text-[#c6af6c]" />
@@ -210,10 +324,10 @@ export default function SettingsPage() {
             </div>
           ))}
         </div>
-      </Card>
+      </Card> */}
 
       {/* Security Settings */}
-      <Card className="p-6">
+      {/* <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-[#c6af6c]/10 rounded-lg">
             <Shield className="w-5 h-5 text-[#c6af6c]" />
@@ -253,7 +367,7 @@ export default function SettingsPage() {
             </Button>
           </div>
         </div>
-      </Card>
+      </Card> */}
     </div>
   );
 }

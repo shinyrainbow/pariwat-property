@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Kanit } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 import AuthSessionProvider from "@/components/providers/session-provider";
 import { OrganizationJsonLd } from "@/components/seo/json-ld";
@@ -119,6 +120,9 @@ export default function RootLayout({
         <OrganizationJsonLd />
         <AuthSessionProvider>{children}</AuthSessionProvider>
       </body>
+      {process.env.NEXT_PUBLIC_GA_ID && (
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+      )}
     </html>
   );
 }

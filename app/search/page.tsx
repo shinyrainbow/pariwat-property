@@ -24,10 +24,47 @@ import {
   Grid3X3,
   List,
   Building2,
+  Sparkles,
+  Tag,
+  TrendingUp,
+  CheckCircle,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/layout/header";
+import Footer from "@/components/layout/footer";
+
+interface Promotion {
+  id: string;
+  label: string;
+  type: string;
+  isActive: boolean;
+}
+
+interface PropertyTag {
+  id: string;
+  name: string;
+  color: string | null;
+}
+
+interface PropertyExtension {
+  id: string;
+  priority: number;
+  isHidden: boolean;
+  isFeaturedPopular: boolean;
+  promotions: Promotion[];
+  tags: PropertyTag[];
+}
+
+type PropertyStatus =
+  | "pending"
+  | "available"
+  | "reserved"
+  | "under_contract"
+  | "sold"
+  | "rented"
+  | "under_maintenance"
+  | "off_market";
 
 interface Property {
   id: string;
@@ -48,14 +85,19 @@ interface Property {
   latitude: number | null;
   longitude: number | null;
   district?: string;
+  projectCode?: string;
+  status: PropertyStatus;
   project: {
     projectNameEn: string;
     projectNameTh: string;
   } | null;
+  extension: PropertyExtension | null;
 }
 
-interface Location {
-  name: string;
+interface Project {
+  projectCode: string;
+  projectNameEn: string;
+  projectNameTh: string;
   count: number;
   image: string;
 }
@@ -63,24 +105,43 @@ interface Location {
 function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const locationParam = searchParams.get("location") || "";
+
+  // Read all filter params from URL
+  const projectParam = searchParams.get("project") || "";
+  const propertyTypeParam = searchParams.get("propertyType") || "";
+  const listingTypeParam = searchParams.get("listingType") || "";
+  const bedroomsParam = searchParams.get("bedrooms") || "";
+  const minPriceParam = searchParams.get("minPrice") || "";
+  const maxPriceParam = searchParams.get("maxPrice") || "";
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [allProperties, setAllProperties] = useState<Property[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLocation, setSelectedLocation] = useState(locationParam);
+  const [selectedProject, setSelectedProject] = useState(projectParam);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
-  // Filters
-  const [propertyType, setPropertyType] = useState<string>("");
-  const [listingType, setListingType] = useState<string>("");
-  const [bedrooms, setBedrooms] = useState<string>("");
-  const [minPrice, setMinPrice] = useState<string>("");
-  const [maxPrice, setMaxPrice] = useState<string>("");
+  // Filters - initialized from URL params
+  const [searchText, setSearchText] = useState<string>(searchParams.get("q") || "");
+  const [propertyType, setPropertyType] = useState<string>(propertyTypeParam);
+  const [listingType, setListingType] = useState<string>(listingTypeParam);
+  const [bedrooms, setBedrooms] = useState<string>(bedroomsParam);
+  const [minPrice, setMinPrice] = useState<string>(minPriceParam);
+  const [maxPrice, setMaxPrice] = useState<string>(maxPriceParam);
+
+  // Sync state with URL params when they change (e.g., navigating from homepage)
+  useEffect(() => {
+    setSearchText(searchParams.get("q") || "");
+    setSelectedProject(searchParams.get("project") || "");
+    setPropertyType(searchParams.get("propertyType") || "");
+    setListingType(searchParams.get("listingType") || "");
+    setBedrooms(searchParams.get("bedrooms") || "");
+    setMinPrice(searchParams.get("minPrice") || "");
+    setMaxPrice(searchParams.get("maxPrice") || "");
+  }, [searchParams]);
 
   // Animation trigger
   useEffect(() => {
@@ -93,21 +154,21 @@ function SearchContent() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [propertiesRes, locationsRes] = await Promise.all([
-          fetch("/api/public/properties?limit=100"),
-          fetch("/api/public/locations"),
+        const [propertiesRes, projectsRes] = await Promise.all([
+          fetch("/api/public/enhanced-properties?limit=100"),
+          fetch("/api/public/projects"),
         ]);
 
-        const [propertiesData, locationsData] = await Promise.all([
+        const [propertiesData, projectsData] = await Promise.all([
           propertiesRes.json(),
-          locationsRes.json(),
+          projectsRes.json(),
         ]);
 
         if (propertiesData.success) {
           setAllProperties(propertiesData.data);
         }
-        if (locationsData.success) {
-          setLocations(locationsData.data);
+        if (projectsData.success) {
+          setProjects(projectsData.data);
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -123,10 +184,23 @@ function SearchContent() {
   useEffect(() => {
     let filtered = [...allProperties];
 
-    // Filter by location
-    if (selectedLocation) {
+    // Filter by text search
+    if (searchText) {
+      const searchLower = searchText.toLowerCase();
       filtered = filtered.filter(
-        (p) => p.district?.toLowerCase() === selectedLocation.toLowerCase()
+        (p) =>
+          p.propertyTitleTh?.toLowerCase().includes(searchLower) ||
+          p.propertyTitleEn?.toLowerCase().includes(searchLower) ||
+          p.agentPropertyCode?.toLowerCase().includes(searchLower) ||
+          p.project?.projectNameTh?.toLowerCase().includes(searchLower) ||
+          p.project?.projectNameEn?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Filter by project
+    if (selectedProject) {
+      filtered = filtered.filter(
+        (p) => p.projectCode === selectedProject
       );
     }
 
@@ -177,7 +251,8 @@ function SearchContent() {
     setProperties(filtered);
   }, [
     allProperties,
-    selectedLocation,
+    searchText,
+    selectedProject,
     propertyType,
     listingType,
     bedrooms,
@@ -185,16 +260,22 @@ function SearchContent() {
     maxPrice,
   ]);
 
-  // Update URL when location changes
+  // Update URL when filters change
   useEffect(() => {
-    if (selectedLocation) {
-      router.push(`/search?location=${encodeURIComponent(selectedLocation)}`, {
-        scroll: false,
-      });
-    } else {
-      router.push("/search", { scroll: false });
-    }
-  }, [selectedLocation, router]);
+    const params = new URLSearchParams();
+    if (searchText) params.set("q", searchText);
+    if (selectedProject) params.set("project", selectedProject);
+    if (propertyType && propertyType !== "all") params.set("propertyType", propertyType);
+    if (listingType && listingType !== "all") params.set("listingType", listingType);
+    if (bedrooms && bedrooms !== "all") params.set("bedrooms", bedrooms);
+    if (minPrice) params.set("minPrice", minPrice);
+    if (maxPrice) params.set("maxPrice", maxPrice);
+
+    const queryString = params.toString();
+    router.push(`/search${queryString ? `?${queryString}` : ""}`, {
+      scroll: false,
+    });
+  }, [searchText, selectedProject, propertyType, listingType, bedrooms, minPrice, maxPrice, router]);
 
   const formatPrice = (price: number | null) => {
     if (!price) return null;
@@ -209,7 +290,8 @@ function SearchContent() {
   };
 
   const handleResetFilters = () => {
-    setSelectedLocation("");
+    setSearchText("");
+    setSelectedProject("");
     setPropertyType("");
     setListingType("");
     setBedrooms("");
@@ -217,9 +299,14 @@ function SearchContent() {
     setMaxPrice("");
   };
 
-  const handleLocationSelect = (location: string) => {
-    setSelectedLocation(location === selectedLocation ? "" : location);
+  const handleProjectSelect = (projectCode: string) => {
+    setSelectedProject(projectCode === selectedProject ? "" : projectCode);
   };
+
+  // Get selected project name for display
+  const selectedProjectName = projects.find(p => p.projectCode === selectedProject)?.projectNameTh ||
+                              projects.find(p => p.projectCode === selectedProject)?.projectNameEn ||
+                              selectedProject;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -237,50 +324,50 @@ function SearchContent() {
           }`}
         >
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            {selectedLocation
-              ? `ค้นหาทรัพย์สินใน ${selectedLocation}`
-              : "ค้นหาทรัพย์สินตามทำเล"}
+            {selectedProject
+              ? `ค้นหาทรัพย์สินใน ${selectedProjectName}`
+              : "ค้นหาทรัพย์สินตามโครงการ"}
           </h1>
           <p className="text-lg text-white/90 mb-6">
-            {selectedLocation
-              ? `พบ ${properties.length} รายการในทำเล ${selectedLocation}`
-              : "เลือกทำเลที่คุณสนใจเพื่อค้นหาทรัพย์สิน"}
+            {selectedProject
+              ? `พบ ${properties.length} รายการในโครงการ ${selectedProjectName}`
+              : "เลือกโครงการที่คุณสนใจเพื่อค้นหาทรัพย์สิน"}
           </p>
 
-          {selectedLocation && (
+          {selectedProject && (
             <Button
               variant="outline"
               className="bg-white/20 border-white text-white hover:bg-white hover:text-[#c6af6c]"
-              onClick={() => setSelectedLocation("")}
+              onClick={() => setSelectedProject("")}
             >
               <X className="w-4 h-4 mr-2" />
-              ล้างทำเลที่เลือก
+              ล้างโครงการที่เลือก
             </Button>
           )}
         </div>
       </section>
 
-      {/* Locations Quick Select */}
+      {/* Projects Quick Select */}
       <section className="bg-white py-6 border-b">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap gap-2 justify-center">
-            {locations.map((location) => (
+            {projects.map((project) => (
               <Button
-                key={location.name}
+                key={project.projectCode}
                 variant={
-                  selectedLocation === location.name ? "default" : "outline"
+                  selectedProject === project.projectCode ? "default" : "outline"
                 }
                 className={`transition-all duration-300 ${
-                  selectedLocation === location.name
+                  selectedProject === project.projectCode
                     ? "bg-[#c6af6c] hover:bg-[#b39d5b] text-white border-[#c6af6c]"
                     : "bg-gray-100 border-2 border-gray-200 text-gray-800 hover:border-[#c6af6c] hover:bg-[#c6af6c]/10 hover:text-[#b39d5b]"
                 }`}
-                onClick={() => handleLocationSelect(location.name)}
+                onClick={() => handleProjectSelect(project.projectCode)}
               >
-                <MapPin className="w-4 h-4 mr-1" />
-                {location.name}
+                <Building2 className="w-4 h-4 mr-1" />
+                {project.projectNameTh || project.projectNameEn}
                 <span className="ml-1 text-xs opacity-75">
-                  ({location.count})
+                  ({project.count})
                 </span>
               </Button>
             ))}
@@ -289,6 +376,18 @@ function SearchContent() {
       </section>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Mobile Filter Toggle */}
+        <div className="lg:hidden mb-4">
+          <Button
+            variant="outline"
+            className="w-full border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <SlidersHorizontal className="w-4 h-4 mr-2" />
+            {showFilters ? "ซ่อนตัวกรอง" : "แสดงตัวกรอง"}
+          </Button>
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar Filters */}
           <aside
@@ -310,6 +409,23 @@ function SearchContent() {
               </div>
 
               <div className="space-y-5">
+                {/* Text Search */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    ค้นหา
+                  </label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="ค้นหาชื่อ, รหัส, โครงการ..."
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      className="pl-10 border-gray-300"
+                    />
+                  </div>
+                </div>
+
                 {/* Property Type */}
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -324,6 +440,7 @@ function SearchContent() {
                       <SelectItem value="Condo">คอนโด</SelectItem>
                       <SelectItem value="Townhouse">ทาวน์เฮ้าส์</SelectItem>
                       <SelectItem value="SingleHouse">บ้านเดี่ยว</SelectItem>
+                      <SelectItem value="Land">ที่ดิน</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -515,32 +632,64 @@ function SearchContent() {
                         )}
 
                         {/* Badges */}
-                        <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-md text-gray-800 px-2 py-1 rounded-full text-xs font-semibold shadow-lg">
-                          {property.propertyType === "Condo"
-                            ? "คอนโด"
-                            : property.propertyType === "Townhouse"
-                            ? "ทาวน์เฮ้าส์"
-                            : "บ้านเดี่ยว"}
-                        </div>
-
-                        {property.rentalRateNum && property.rentalRateNum > 0 && (
-                          <div className="absolute top-2 right-2 bg-emerald-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
-                            เช่า
+                        <div className="absolute top-2 left-2 flex flex-col gap-1">
+                          <div className="bg-white/95 backdrop-blur-md text-gray-800 px-2 py-1 rounded-full text-xs font-semibold shadow-lg">
+                            {property.propertyType === "Condo"
+                              ? "คอนโด"
+                              : property.propertyType === "Townhouse"
+                              ? "ทาวน์เฮ้าส์"
+                              : property.propertyType === "Land"
+                              ? "ที่ดิน"
+                              : "บ้านเดี่ยว"}
                           </div>
-                        )}
-                        {property.sellPriceNum &&
-                          property.sellPriceNum > 0 &&
-                          !property.rentalRateNum && (
-                            <div className="absolute top-2 right-2 bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
-                              ขาย
+                          {/* Popular Badge */}
+                          {property.extension?.isFeaturedPopular && (
+                            <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+                              <TrendingUp className="w-3 h-3" />
+                              ยอดนิยม
                             </div>
                           )}
-
-                        {/* Rating */}
-                        <div className="absolute bottom-2 left-2 bg-[#c6af6c]/95 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-                          <Star className="w-3 h-3 fill-white" />
-                          4.8
+                          {/* Promotion Badge */}
+                          {property.extension?.promotions && property.extension.promotions.length > 0 && (
+                            <div className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" />
+                              {property.extension.promotions[0].label}
+                            </div>
+                          )}
                         </div>
+
+                        {/* Listing Type & Closed Deal Badge */}
+                        <div className="absolute top-2 right-2 flex flex-col gap-1">
+                          {property.status === "sold" || property.status === "rented" ? (
+                            <div className="bg-gray-700 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              {property.status === "sold" ? "ขายแล้ว" : "เช่าแล้ว"}
+                            </div>
+                          ) : (
+                            <>
+                              {property.rentalRateNum && property.rentalRateNum > 0 && (
+                                <div className="bg-emerald-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                                  เช่า
+                                </div>
+                              )}
+                              {property.sellPriceNum &&
+                                property.sellPriceNum > 0 &&
+                                !property.rentalRateNum && (
+                                  <div className="bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                                    ขาย
+                                  </div>
+                                )}
+                            </>
+                          )}
+                        </div>
+
+                        {/* Popular Star Rating */}
+                        {property.extension?.isFeaturedPopular && (
+                          <div className="absolute bottom-2 left-2 bg-[#c6af6c]/95 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                            <Star className="w-3 h-3 fill-white" />
+                            แนะนำ
+                          </div>
+                        )}
                       </div>
 
                       {/* Property Details */}
@@ -599,6 +748,25 @@ function SearchContent() {
                             )}
                         </div>
 
+                        {/* Tags */}
+                        {property.extension?.tags && property.extension.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {property.extension.tags.slice(0, 3).map((tag) => (
+                              <span
+                                key={tag.id}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                                style={{
+                                  backgroundColor: `${tag.color || "#3B82F6"}20`,
+                                  color: tag.color || "#3B82F6",
+                                }}
+                              >
+                                <Tag className="w-2.5 h-2.5" />
+                                {tag.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
                         <div className="text-xs text-gray-400 mt-2">
                           รหัส: {property.agentPropertyCode}
                         </div>
@@ -613,22 +781,9 @@ function SearchContent() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 mt-12">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Building2 className="w-8 h-8 text-[#c6af6c]" />
-            <span className="text-xl font-bold text-white">
-              Pariwat Property
-            </span>
-          </div>
-          <p className="mb-2 text-sm">
-            Premium Real Estate Solutions | Bangkok, Thailand
-          </p>
-          <p className="text-xs">
-            © 2025 Puriwat Properties. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <div className="mt-12">
+        <Footer />
+      </div>
     </div>
   );
 }

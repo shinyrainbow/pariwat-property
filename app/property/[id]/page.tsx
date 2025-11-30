@@ -31,6 +31,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 import Header from "@/components/layout/header";
+import Footer from "@/components/layout/footer";
 import { PropertyJsonLd } from "@/components/seo/json-ld";
 
 interface Property {
@@ -137,12 +138,13 @@ export default function PropertyDetailPage() {
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const res = await fetch(`/api/public/properties/${params.id}`);
+        // Use enhanced-properties API for real data from NainaHub
+        const res = await fetch(`/api/public/enhanced-properties/${params.id}`);
         const data = await res.json();
         if (data.success) {
           setProperty(data.data);
           // Fetch recommended properties
-          fetchRecommendedProperties(data.data.id);
+          fetchRecommendedProperties(data.data.id, data.data.propertyType);
         }
       } catch (error) {
         console.error("Failed to fetch property:", error);
@@ -151,16 +153,26 @@ export default function PropertyDetailPage() {
       }
     };
 
-    const fetchRecommendedProperties = async (currentId: string) => {
+    const fetchRecommendedProperties = async (currentId: string, propertyType?: string) => {
       try {
-        const res = await fetch(`/api/public/properties?limit=4`);
+        // Use enhanced-properties API for real data from NainaHub
+        // Fetch more to ensure we have enough after filtering
+        const res = await fetch(`/api/public/enhanced-properties?limit=8`);
         const data = await res.json();
         if (data.success) {
-          // Filter out current property and limit to 4
-          const filtered = data.data
-            .filter((p: Property) => p.id !== currentId)
-            .slice(0, 4);
-          setRecommendedProperties(filtered);
+          // Filter out current property, prioritize same type, and limit to 4
+          let filtered = data.data.filter((p: Property) => p.id !== currentId);
+
+          // Sort to prioritize same property type
+          if (propertyType) {
+            filtered.sort((a: Property, b: Property) => {
+              if (a.propertyType === propertyType && b.propertyType !== propertyType) return -1;
+              if (a.propertyType !== propertyType && b.propertyType === propertyType) return 1;
+              return 0;
+            });
+          }
+
+          setRecommendedProperties(filtered.slice(0, 4));
         }
       } catch (error) {
         console.error("Failed to fetch recommended properties:", error);
@@ -817,17 +829,17 @@ export default function PropertyDetailPage() {
                       <input
                         type="text"
                         placeholder="ชื่อ-นามสกุล"
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6af6c]/50 focus:border-[#c6af6c] transition-all"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6af6c]/50 focus:border-[#c6af6c] transition-all text-gray-900"
                       />
                       <input
                         type="tel"
                         placeholder="เบอร์โทรศัพท์"
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6af6c]/50 focus:border-[#c6af6c] transition-all"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6af6c]/50 focus:border-[#c6af6c] transition-all text-gray-900"
                       />
                       <textarea
                         placeholder="ข้อความ (ไม่บังคับ)"
                         rows={3}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6af6c]/50 focus:border-[#c6af6c] transition-all resize-none"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6af6c]/50 focus:border-[#c6af6c] transition-all resize-none text-gray-900"
                       />
                       <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white py-3 rounded-xl font-semibold transition-all">
                         ส่งข้อมูล
@@ -912,6 +924,8 @@ export default function PropertyDetailPage() {
                               ? "คอนโด"
                               : rec.propertyType === "Townhouse"
                               ? "ทาวน์เฮ้าส์"
+                              : rec.propertyType === "Land"
+                              ? "ที่ดิน"
                               : "บ้านเดี่ยว"}
                           </span>
                         </div>
@@ -974,7 +988,7 @@ export default function PropertyDetailPage() {
 
               {/* View All Button */}
               <div className="text-center mt-10">
-                <Link href="/properties">
+                <Link href="/search">
                   <Button
                     variant="outline"
                     className="border-2 border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 hover:scale-105"
@@ -988,22 +1002,7 @@ export default function PropertyDetailPage() {
         )}
 
         {/* Footer */}
-        <footer className="bg-gray-900 text-gray-400 py-8">
-          <div className="container mx-auto px-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <Building2 className="w-8 h-8 text-[#c6af6c]" />
-              <span className="text-xl font-bold text-white">
-                Pariwat Property
-              </span>
-            </div>
-            <p className="mb-2 text-sm">
-              Premium Real Estate Solutions | Bangkok, Thailand
-            </p>
-            <p className="text-xs">
-              © 2025 Pariwat Property. All rights reserved.
-            </p>
-          </div>
-        </footer>
+        <Footer />
       </div>
     </div>
   );

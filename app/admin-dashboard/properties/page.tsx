@@ -13,41 +13,75 @@ import {
 } from "@/components/ui/select";
 import Link from "next/link";
 import {
-  Plus,
   Search,
-  Edit,
-  Trash2,
   Eye,
-  MoreVertical,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Star,
   Bed,
   Bath,
   Maximize,
+  Percent,
+  CheckCircle,
+  XCircle,
+  Flame,
 } from "lucide-react";
 import Image from "next/image";
 
+interface Promotion {
+  id: string;
+  label: string;
+  type: string;
+  isActive: boolean;
+}
+
+interface PropertyTag {
+  id: string;
+  name: string;
+  color: string | null;
+}
+
+interface PropertyExtension {
+  id: string;
+  externalPropertyId: string;
+  priority: number;
+  internalNotes: string | null;
+  isHidden: boolean;
+  isFeaturedPopular: boolean;
+  promotions: Promotion[];
+  tags: PropertyTag[];
+}
+
+interface NainaHubProject {
+  projectCode: string;
+  projectNameEn: string;
+  projectNameTh: string;
+}
+
+type PropertyStatus =
+  | "pending"
+  | "available"
+  | "reserved"
+  | "under_contract"
+  | "sold"
+  | "rented"
+  | "under_maintenance"
+  | "off_market";
+
 interface Property {
   id: string;
-  agentPropertyCode: string;
-  propertyType: string;
-  listingType: string;
-  propertyTitleTh: string;
+  projectPropertyCode: string | null;
+  agentPropertyCode: string | null;
+  propertyType: "Condo" | "Townhouse" | "SingleHouse" | "Land";
   propertyTitleEn: string;
+  propertyTitleTh: string;
   bedRoomNum: number;
   bathRoomNum: number;
-  roomSizeNum: number | null;
-  usableAreaSqm: number | null;
+  roomSizeNum: number;
+  usableAreaSqm: number;
   imageUrls: string[];
-  rentalRateNum: number | null;
-  sellPriceNum: number | null;
-  status: string;
-  featured: boolean;
-  views: number;
-  createdAt: string;
-  updatedAt: string;
+  rentalRateNum: number;
+  sellPriceNum: number;
+  project: NainaHubProject;
+  status: PropertyStatus;
+  extension: PropertyExtension | null;
 }
 
 export default function PropertiesListPage() {
@@ -56,10 +90,13 @@ export default function PropertiesListPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
-  const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const [extensionFilter, setExtensionFilter] = useState("");
+  const [updating, setUpdating] = useState<string | null>(null);
+
+  // Modal states
+  const [showPromotionModal, setShowPromotionModal] = useState<Property | null>(null);
+  const [promotionForm, setPromotionForm] = useState({ label: "", type: "discount" });
 
   const fetchProperties = async () => {
     setLoading(true);
@@ -67,17 +104,48 @@ export default function PropertiesListPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "10",
-        ...(search && { search }),
-        ...(statusFilter && { status: statusFilter }),
-        ...(typeFilter && { propertyType: typeFilter }),
+        ...(typeFilter && typeFilter !== "all" && { propertyType: typeFilter }),
       });
 
-      const res = await fetch(`/api/admin/properties?${params}`);
+      const res = await fetch(`/api/public/enhanced-properties?${params}&includeHidden=true`);
       const data = await res.json();
 
       if (data.success) {
-        setProperties(data.data);
-        setTotal(data.pagination.total);
+        let filteredData = data.data;
+
+        // Client-side search filter
+        if (search) {
+          const searchLower = search.toLowerCase();
+          filteredData = filteredData.filter(
+            (p: Property) =>
+              p.propertyTitleTh?.toLowerCase().includes(searchLower) ||
+              p.propertyTitleEn?.toLowerCase().includes(searchLower) ||
+              p.agentPropertyCode?.toLowerCase().includes(searchLower) ||
+              p.project?.projectNameTh?.toLowerCase().includes(searchLower) ||
+              p.project?.projectNameEn?.toLowerCase().includes(searchLower)
+          );
+        }
+
+        // Extension filter
+        if (extensionFilter && extensionFilter !== "all") {
+          filteredData = filteredData.filter((p: Property) => {
+            switch (extensionFilter) {
+              case "popular":
+                return p.extension?.isFeaturedPopular;
+              case "has_promotions":
+                return p.extension?.promotions && p.extension.promotions.length > 0;
+              case "closed_deal":
+                return p.status === "sold" || p.status === "rented";
+              case "hidden":
+                return p.extension?.isHidden;
+              default:
+                return true;
+            }
+          });
+        }
+
+        setProperties(filteredData);
+        setTotal(data.pagination?.total || filteredData.length);
       }
     } catch (error) {
       console.error("Failed to fetch properties:", error);
@@ -88,7 +156,7 @@ export default function PropertiesListPage() {
 
   useEffect(() => {
     fetchProperties();
-  }, [page, statusFilter, typeFilter]);
+  }, [page, typeFilter, extensionFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -98,21 +166,115 @@ export default function PropertiesListPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const handleDelete = async (id: string) => {
-    setDeleting(true);
+  const togglePopular = async (propertyId: string, currentValue: boolean) => {
+    setUpdating(propertyId);
     try {
-      const res = await fetch(`/api/admin/properties/${id}`, {
-        method: "DELETE",
+      const res = await fetch(`/api/admin/extensions/${propertyId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFeaturedPopular: !currentValue }),
       });
 
       if (res.ok) {
-        setDeleteModalId(null);
-        fetchProperties();
+        const data = await res.json();
+        // Update local state instead of refetching
+        setProperties((prev) =>
+          prev.map((p) =>
+            p.id === propertyId
+              ? { ...p, extension: data.data || { ...p.extension, isFeaturedPopular: !currentValue } }
+              : p
+          )
+        );
       }
     } catch (error) {
-      console.error("Failed to delete property:", error);
+      console.error("Failed to toggle popular:", error);
     } finally {
-      setDeleting(false);
+      setUpdating(null);
+    }
+  };
+
+  const toggleHidden = async (propertyId: string, currentValue: boolean) => {
+    setUpdating(propertyId);
+    try {
+      const res = await fetch(`/api/admin/extensions/${propertyId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isHidden: !currentValue }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Update local state instead of refetching
+        setProperties((prev) =>
+          prev.map((p) =>
+            p.id === propertyId
+              ? { ...p, extension: data.data || { ...p.extension, isHidden: !currentValue } }
+              : p
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Failed to toggle hidden:", error);
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleAddPromotion = async () => {
+    if (!showPromotionModal || !promotionForm.label) return;
+
+    setUpdating(showPromotionModal.id);
+    try {
+      const res = await fetch(`/api/admin/extensions/${showPromotionModal.id}/promotions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(promotionForm),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Update local state instead of refetching
+        setProperties((prev) =>
+          prev.map((p) =>
+            p.id === showPromotionModal.id
+              ? { ...p, extension: data.data }
+              : p
+          )
+        );
+        setShowPromotionModal(null);
+        setPromotionForm({ label: "", type: "discount" });
+      }
+    } catch (error) {
+      console.error("Failed to add promotion:", error);
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleRemovePromotion = async (propertyId: string, promotionId: string) => {
+    setUpdating(propertyId);
+    try {
+      const res = await fetch(`/api/admin/extensions/${propertyId}/promotions`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ promotionId }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Update local state instead of refetching
+        setProperties((prev) =>
+          prev.map((p) =>
+            p.id === propertyId
+              ? { ...p, extension: data.data }
+              : p
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Failed to remove promotion:", error);
+    } finally {
+      setUpdating(null);
     }
   };
 
@@ -121,28 +283,12 @@ export default function PropertiesListPage() {
     return new Intl.NumberFormat("th-TH").format(price);
   };
 
-  const getStatusBadge = (status: string) => {
-    const config: Record<string, { label: string; className: string }> = {
-      active: { label: "Active", className: "bg-green-100 text-green-800" },
-      inactive: { label: "Inactive", className: "bg-gray-100 text-gray-800" },
-      sold: { label: "Sold", className: "bg-blue-100 text-blue-800" },
-      rented: { label: "Rented", className: "bg-purple-100 text-purple-800" },
-    };
-    const c = config[status] || config.inactive;
-    return (
-      <span
-        className={`px-2 py-1 rounded-full text-xs font-medium ${c.className}`}
-      >
-        {c.label}
-      </span>
-    );
-  };
-
   const getPropertyTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       Condo: "คอนโด",
       Townhouse: "ทาวน์เฮ้าส์",
       SingleHouse: "บ้านเดี่ยว",
+      Land: "ที่ดิน",
     };
     return labels[type] || type;
   };
@@ -155,14 +301,16 @@ export default function PropertiesListPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">รายการทรัพย์สิน</h1>
-          <p className="text-gray-600 mt-1">จัดการทรัพย์สินทั้งหมดของคุณ</p>
+          <p className="text-gray-600 mt-1">
+            จัดการทรัพย์สินจาก NainaHub - กำหนด Popular, Promotions
+          </p>
         </div>
-        <Link href="/admin-dashboard/properties/new">
-          <Button className="bg-[#c6af6c] hover:bg-[#b39d5b] text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            เพิ่มทรัพย์สินใหม่
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <span className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+            จาก NainaHub API
+          </span>
+        </div>
       </div>
 
       {/* Filters */}
@@ -180,20 +328,6 @@ export default function PropertiesListPage() {
             </div>
           </div>
           <div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="สถานะทั้งหมด" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">สถานะทั้งหมด</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="sold">Sold</SelectItem>
-                <SelectItem value="rented">Rented</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="ประเภททั้งหมด" />
@@ -203,6 +337,35 @@ export default function PropertiesListPage() {
                 <SelectItem value="Condo">คอนโด</SelectItem>
                 <SelectItem value="Townhouse">ทาวน์เฮ้าส์</SelectItem>
                 <SelectItem value="SingleHouse">บ้านเดี่ยว</SelectItem>
+                <SelectItem value="Land">ที่ดิน</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Select value={extensionFilter} onValueChange={setExtensionFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="สถานะพิเศษ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">ทั้งหมด</SelectItem>
+                <SelectItem value="popular">
+                  <span className="flex items-center gap-2">
+                    <Flame className="w-4 h-4 text-orange-500" />
+                    Popular
+                  </span>
+                </SelectItem>
+                <SelectItem value="has_promotions">
+                  <span className="flex items-center gap-2">
+                    <Percent className="w-4 h-4 text-red-500" />
+                    มี Promotions
+                  </span>
+                </SelectItem>
+                <SelectItem value="closed_deal">
+                  <span className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    Closed Deals
+                  </span>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -232,23 +395,19 @@ export default function PropertiesListPage() {
             ไม่พบทรัพย์สิน
           </h3>
           <p className="text-gray-600 mb-4">ลองปรับเปลี่ยนเงื่อนไขการค้นหา</p>
-          <Link href="/admin-dashboard/properties/new">
-            <Button className="bg-[#c6af6c] hover:bg-[#b39d5b] text-white">
-              <Plus className="w-4 h-4 mr-2" />
-              เพิ่มทรัพย์สินใหม่
-            </Button>
-          </Link>
         </Card>
       ) : (
         <div className="space-y-4">
           {properties.map((property) => (
             <Card
               key={property.id}
-              className="p-4 hover:shadow-lg transition-shadow"
+              className={`p-4 hover:shadow-lg transition-shadow ${
+                property.extension?.isHidden ? "opacity-50" : ""
+              } ${property.status === "sold" || property.status === "rented" ? "border-green-300 bg-green-50/30" : ""}`}
             >
-              <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col lg:flex-row gap-4">
                 {/* Image */}
-                <div className="relative w-full md:w-48 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                <div className="relative w-full lg:w-48 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                   {property.imageUrls && property.imageUrls.length > 0 ? (
                     <Image
                       src={property.imageUrls[0]}
@@ -261,12 +420,27 @@ export default function PropertiesListPage() {
                       <Building2 className="w-12 h-12" />
                     </div>
                   )}
-                  {property.featured && (
-                    <div className="absolute top-2 left-2 bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                      <Star className="w-3 h-3" />
-                      Featured
-                    </div>
-                  )}
+                  {/* Badges */}
+                  <div className="absolute top-2 left-2 flex flex-col gap-1">
+                    {property.extension?.isFeaturedPopular && (
+                      <span className="bg-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-bold flex items-center gap-1">
+                        <Flame className="w-3 h-3" />
+                        Popular
+                      </span>
+                    )}
+                    {(property.status === "sold" || property.status === "rented") && (
+                      <span className="bg-green-500 text-white px-2 py-0.5 rounded-full text-xs font-bold flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        {property.status === "sold" ? "ขายแล้ว" : "ปล่อยเช่าแล้ว"}
+                      </span>
+                    )}
+                    {property.extension?.promotions && property.extension.promotions.length > 0 && (
+                      <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-bold flex items-center gap-1">
+                        <Percent className="w-3 h-3" />
+                        {property.extension.promotions.length} Promo
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Info */}
@@ -275,20 +449,17 @@ export default function PropertiesListPage() {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs text-gray-500">
-                          {property.agentPropertyCode}
+                          {property.agentPropertyCode || property.id.slice(0, 8)}
                         </span>
-                        {getStatusBadge(property.status)}
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {getPropertyTypeLabel(property.propertyType)}
+                        </span>
                       </div>
                       <h3 className="font-semibold text-gray-900 truncate">
                         {property.propertyTitleTh || property.propertyTitleEn}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        {getPropertyTypeLabel(property.propertyType)} •{" "}
-                        {property.listingType === "rent"
-                          ? "ให้เช่า"
-                          : property.listingType === "sale"
-                          ? "ขาย"
-                          : "เช่า/ขาย"}
+                        {property.project?.projectNameTh || property.project?.projectNameEn || "ไม่ระบุโครงการ"}
                       </p>
                     </div>
                   </div>
@@ -306,69 +477,127 @@ export default function PropertiesListPage() {
                     <div className="flex items-center gap-1">
                       <Maximize className="w-4 h-4" />
                       <span>
-                        {property.roomSizeNum || property.usableAreaSqm || "-"}{" "}
-                        ตร.ม.
+                        {property.roomSizeNum || property.usableAreaSqm || "-"} ตร.ม.
                       </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Eye className="w-4 h-4" />
-                      <span>{property.views} views</span>
                     </div>
                   </div>
 
                   {/* Price */}
                   <div className="mt-2">
-                    {property.rentalRateNum && (
+                    {property.rentalRateNum > 0 && (
                       <span className="text-lg font-bold text-[#c6af6c]">
                         ฿{formatPrice(property.rentalRateNum)}
-                        <span className="text-sm font-normal text-gray-500">
-                          /เดือน
-                        </span>
+                        <span className="text-sm font-normal text-gray-500">/เดือน</span>
                       </span>
                     )}
-                    {property.sellPriceNum && (
-                      <span
-                        className={`text-lg font-bold text-[#c6af6c] ${
-                          property.rentalRateNum ? "ml-4" : ""
-                        }`}
-                      >
+                    {property.sellPriceNum > 0 && (
+                      <span className={`text-lg font-bold text-[#c6af6c] ${property.rentalRateNum ? "ml-4" : ""}`}>
                         ฿{formatPrice(property.sellPriceNum)}
                       </span>
                     )}
                   </div>
+
+                  {/* Promotions list */}
+                  {property.extension?.promotions && property.extension.promotions.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {property.extension.promotions.map((promo) => (
+                        <span
+                          key={promo.id}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs"
+                        >
+                          <Percent className="w-3 h-3" />
+                          {promo.label}
+                          <button
+                            onClick={() => handleRemovePromotion(property.id, promo.id)}
+                            className="ml-1 hover:text-red-900"
+                            disabled={updating === property.id}
+                          >
+                            <XCircle className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions */}
-                <div className="flex md:flex-col gap-2 flex-shrink-0">
-                  <Link href={`/admin-dashboard/properties/${property.id}`}>
+                <div className="flex lg:flex-col gap-2 flex-shrink-0 flex-wrap">
+                  {/* Toggle Popular */}
+                  <Button
+                    variant={property.extension?.isFeaturedPopular ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => togglePopular(property.id, !!property.extension?.isFeaturedPopular)}
+                    disabled={updating === property.id || property.status === "sold" || property.status === "rented"}
+                    className={property.extension?.isFeaturedPopular ? "bg-orange-500 hover:bg-orange-600" : ""}
+                  >
+                    <Flame className="w-4 h-4 mr-1" />
+                    Popular
+                  </Button>
+
+                  {/* Add Promotion */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPromotionModal(property)}
+                    disabled={updating === property.id || property.status === "sold" || property.status === "rented"}
+                  >
+                    <Percent className="w-4 h-4 mr-1" />
+                    โปรโมชั่น
+                  </Button>
+
+                  {/* Mark as Closed Deal */}
+                  {/* {property.extension?.closedDealDate ? (
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full md:w-auto"
+                      onClick={() => handleRemoveClosedDeal(property.id)}
+                      disabled={updating === property.id}
+                      className="text-green-600 border-green-300 hover:bg-green-50"
                     >
-                      <Edit className="w-4 h-4 mr-1" />
-                      แก้ไข
+                      <XCircle className="w-4 h-4 mr-1" />
+                      ยกเลิก Closed
                     </Button>
-                  </Link>
-                  <Link href={`/property/${property.id}`} target="_blank">
+                  ) : (
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full md:w-auto"
+                      onClick={() => setShowClosedDealModal(property)}
+                      disabled={updating === property.id}
+                      className="text-green-600 hover:bg-green-50"
                     >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Closed Deal
+                    </Button>
+                  )} */}
+
+                  {/* View Property */}
+                  <Link href={`/property/${property.id}`} target="_blank">
+                    <Button variant="outline" size="sm" className="w-full">
                       <Eye className="w-4 h-4 mr-1" />
                       ดู
                     </Button>
                   </Link>
-                  <Button
+
+                  {/* Toggle Hidden */}
+                  {/* <Button
                     variant="outline"
                     size="sm"
-                    className="text-red-600 hover:bg-red-50 hover:text-red-700 w-full md:w-auto"
-                    onClick={() => setDeleteModalId(property.id)}
+                    onClick={() => toggleHidden(property.id, !!property.extension?.isHidden)}
+                    disabled={updating === property.id}
+                    className={property.extension?.isHidden ? "text-gray-400" : ""}
                   >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    ลบ
-                  </Button>
+                    {property.extension?.isHidden ? (
+                      <>
+                        <Eye className="w-4 h-4 mr-1" />
+                        แสดง
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-4 h-4 mr-1" />
+                        ซ่อน
+                      </>
+                    )}
+                  </Button> */}
                 </div>
               </div>
             </Card>
@@ -396,11 +625,7 @@ export default function PropertiesListPage() {
                   size="sm"
                   variant={page === pageNum ? "default" : "outline"}
                   onClick={() => setPage(pageNum)}
-                  className={
-                    page === pageNum
-                      ? "bg-[#c6af6c] hover:bg-[#b39d5b]"
-                      : ""
-                  }
+                  className={page === pageNum ? "bg-[#c6af6c] hover:bg-[#b39d5b]" : ""}
                 >
                   {pageNum}
                 </Button>
@@ -418,35 +643,70 @@ export default function PropertiesListPage() {
         </div>
       )}
 
-      {/* Delete Modal */}
-      {deleteModalId && (
+      {/* Promotion Modal */}
+      {showPromotionModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              ยืนยันการลบ
+          <Card className="w-full max-w-md p-6 bg-white">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              เพิ่มโปรโมชั่น
             </h3>
-            <p className="text-gray-600 mb-6">
-              คุณต้องการลบทรัพย์สินนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้
+            <p className="text-sm text-gray-500 mb-4">
+              {showPromotionModal.propertyTitleTh || showPromotionModal.propertyTitleEn}
             </p>
-            <div className="flex gap-3 justify-end">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ข้อความโปรโมชั่น
+                </label>
+                <Input
+                  value={promotionForm.label}
+                  onChange={(e) => setPromotionForm({ ...promotionForm, label: e.target.value })}
+                  placeholder="เช่น: ลด 10%, ฟรีค่าโอน"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ประเภท
+                </label>
+                <Select
+                  value={promotionForm.type}
+                  onValueChange={(v) => setPromotionForm({ ...promotionForm, type: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="discount">ส่วนลด</SelectItem>
+                    <SelectItem value="free">ฟรี</SelectItem>
+                    <SelectItem value="special">พิเศษ</SelectItem>
+                    <SelectItem value="limited">จำกัดเวลา</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end mt-6">
               <Button
                 variant="outline"
-                onClick={() => setDeleteModalId(null)}
-                disabled={deleting}
+                onClick={() => {
+                  setShowPromotionModal(null);
+                  setPromotionForm({ label: "", type: "discount" });
+                }}
+                disabled={updating === showPromotionModal.id}
               >
                 ยกเลิก
               </Button>
               <Button
-                className="bg-red-600 hover:bg-red-700 text-white"
-                onClick={() => handleDelete(deleteModalId)}
-                disabled={deleting}
+                className="bg-[#c6af6c] hover:bg-[#b39d5b] text-white"
+                onClick={handleAddPromotion}
+                disabled={updating === showPromotionModal.id || !promotionForm.label}
               >
-                {deleting ? "กำลังลบ..." : "ลบ"}
+                {updating === showPromotionModal.id ? "กำลังเพิ่ม..." : "เพิ่มโปรโมชั่น"}
               </Button>
             </div>
           </Card>
         </div>
       )}
+
     </div>
   );
 }

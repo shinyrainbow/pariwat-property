@@ -219,9 +219,9 @@ export default function PromotionsPage() {
             </span>
           </div>
           <p className="mb-2 text-sm">
-            Premium Real Estate Solutions | Bangkok, Thailand
+            Premium Real Estate Solutions | Chachoengsao, Thailand
           </p>
-          <p className="text-xs">© 2025 NainaHub Properties. All rights reserved.</p>
+   <p className="text-xs">© 2025 บริษัท บุญเกตุ แอสเซท กรุ๊ป จำกัด. All rights reserved.</p>
         </div>
       </footer>
     </div>

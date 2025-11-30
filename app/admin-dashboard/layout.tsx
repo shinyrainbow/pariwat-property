@@ -6,10 +6,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Building2,
   LayoutDashboard,
   Home,
-  Plus,
   Settings,
   LogOut,
   Menu,
@@ -18,7 +16,9 @@ import {
   User,
   Tag,
   Star,
+  Wrench,
 } from "lucide-react";
+import Image from "next/image";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
@@ -34,11 +34,6 @@ const menuItems = [
     icon: Home,
   },
   {
-    label: "เพิ่มทรัพย์สินใหม่",
-    href: "/admin-dashboard/properties/new",
-    icon: Plus,
-  },
-  {
     label: "จัดการโปรโมชัน",
     href: "/admin-dashboard/promotions",
     icon: Tag,
@@ -47,6 +42,11 @@ const menuItems = [
     label: "จัดการรีวิว",
     href: "/admin-dashboard/reviews",
     icon: Star,
+  },
+  {
+    label: "บริการอื่นๆ",
+    href: "/admin-dashboard/other-services",
+    icon: Wrench,
   },
   {
     label: "ตั้งค่า",
@@ -106,7 +106,14 @@ export default function AdminLayout({
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
           <Link href="/admin-dashboard" className="flex items-center gap-2">
-            <Building2 className="w-8 h-8 text-[#c6af6c]" />
+            <Image
+              src="/web-logo.png"
+              alt="Pariwat Property"
+              width={32}
+              height={32}
+              className="w-8 h-8 object-contain"
+              unoptimized
+            />
             <span className="text-lg font-bold text-gray-900">Admin Panel</span>
           </Link>
           <button
