@@ -382,12 +382,13 @@ export default function PropertyDetailPage() {
         <div className="container mx-auto px-6 py-2 flex items-center justify-between">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-[#c6af6c] transition-colors"
+            className="flex items-center gap-2 text-gray-600 hover:text-[#c6af6c] transition-colors pt-6 pb-4"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="text-sm font-medium">ย้อนกลับ</span>
           </button>
-          <div className="flex items-center gap-3">
+
+          {/* <div className="flex items-center gap-3">
             <button
               onClick={() => setIsLiked(!isLiked)}
               className={`p-2 rounded-full transition-colors ${
@@ -403,7 +404,7 @@ export default function PropertyDetailPage() {
             <button className="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
               <Share2 className="w-5 h-5" />
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
 
