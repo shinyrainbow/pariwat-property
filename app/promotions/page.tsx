@@ -79,6 +79,15 @@ export default function PromotionsPage() {
     return labels[type] || type;
   };
 
+  // Helper function to format land size in Thai units (rai-ngan-wa)
+  const formatLandSize = (landSizeSqw: number | null) => {
+    if (!landSizeSqw) return null;
+    const rai = Math.floor(landSizeSqw / 400);
+    const ngan = Math.floor((landSizeSqw % 400) / 100);
+    const sqw = landSizeSqw % 100;
+    return { rai, ngan, sqw };
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Shared Header */}
@@ -191,7 +200,32 @@ export default function PromotionsPage() {
                         </p>
 
                         {/* Property Info */}
-                        {property.propertyType !== "Land" && (
+                        {property.propertyType === "Land" ? (
+                          <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
+                            {(() => {
+                              const landSize = formatLandSize(property.landSizeSqw);
+                              if (!landSize) return <span>-</span>;
+                              return (
+                                <>
+                                  {landSize.rai > 0 && (
+                                    <span className="flex items-center gap-1">
+                                      <Maximize className="w-3 h-3 text-[#c6af6c]" />
+                                      {landSize.rai} ไร่
+                                    </span>
+                                  )}
+                                  {landSize.ngan > 0 && (
+                                    <span className="flex items-center gap-1">
+                                      {landSize.ngan} งาน
+                                    </span>
+                                  )}
+                                  <span className="flex items-center gap-1">
+                                    {landSize.sqw} ตร.ว.
+                                  </span>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        ) : (
                           <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
                             <span className="flex items-center gap-1">
                               <Bed className="w-3 h-3" />

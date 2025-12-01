@@ -299,6 +299,15 @@ export default function PublicPropertiesPage() {
     return property.usableAreaSqm ? `${property.usableAreaSqm}` : "-";
   };
 
+  // Helper function to format land size in Thai units (rai-ngan-wa)
+  const formatLandSize = (landSizeSqw: number | null) => {
+    if (!landSizeSqw) return null;
+    const rai = Math.floor(landSizeSqw / 400);
+    const ngan = Math.floor((landSizeSqw % 400) / 100);
+    const sqw = landSizeSqw % 100;
+    return { rai, ngan, sqw };
+  };
+
   const handleResetFilters = () => {
     setPropertyType("");
     setListingType("");
@@ -644,20 +653,43 @@ export default function PublicPropertiesPage() {
                         {property.project.projectNameTh || property.project.projectNameEn}
                       </p>
                     )}
-                    <div className="flex items-center gap-3 text-xs text-gray-600">
-                      <span className="flex items-center gap-1">
-                        <Bed className="w-3 h-3 text-[#c6af6c]" />
-                        {property.bedRoomNum}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Bath className="w-3 h-3 text-[#c6af6c]" />
-                        {property.bathRoomNum}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Maximize className="w-3 h-3 text-[#c6af6c]" />
-                        {getSize(property)} ตร.ม.
-                      </span>
-                    </div>
+                    {property.propertyType === "Land" ? (
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        {(() => {
+                          const landSize = formatLandSize(property.landSizeSqw);
+                          if (!landSize) return <span>-</span>;
+                          return (
+                            <>
+                              {landSize.rai > 0 && (
+                                <span className="flex items-center gap-1">
+                                  <Maximize className="w-3 h-3 text-[#c6af6c]" />
+                                  {landSize.rai} ไร่
+                                </span>
+                              )}
+                              {landSize.ngan > 0 && (
+                                <span>{landSize.ngan} งาน</span>
+                              )}
+                              <span>{landSize.sqw} ตร.ว.</span>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 text-xs text-gray-600">
+                        <span className="flex items-center gap-1">
+                          <Bed className="w-3 h-3 text-[#c6af6c]" />
+                          {property.bedRoomNum}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Bath className="w-3 h-3 text-[#c6af6c]" />
+                          {property.bathRoomNum}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Maximize className="w-3 h-3 text-[#c6af6c]" />
+                          {getSize(property)} ตร.ม.
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </Card>
               </Link>
@@ -780,20 +812,43 @@ export default function PublicPropertiesPage() {
                         {property.project.projectNameTh || property.project.projectNameEn}
                       </p>
                     )}
-                    <div className="flex items-center gap-3 text-xs text-gray-600">
-                      <span className="flex items-center gap-1">
-                        <Bed className="w-3 h-3 text-[#c6af6c]" />
-                        {property.bedRoomNum}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Bath className="w-3 h-3 text-[#c6af6c]" />
-                        {property.bathRoomNum}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Maximize className="w-3 h-3 text-[#c6af6c]" />
-                        {getSize(property)} ตร.ม.
-                      </span>
-                    </div>
+                    {property.propertyType === "Land" ? (
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        {(() => {
+                          const landSize = formatLandSize(property.landSizeSqw);
+                          if (!landSize) return <span>-</span>;
+                          return (
+                            <>
+                              {landSize.rai > 0 && (
+                                <span className="flex items-center gap-1">
+                                  <Maximize className="w-3 h-3 text-[#c6af6c]" />
+                                  {landSize.rai} ไร่
+                                </span>
+                              )}
+                              {landSize.ngan > 0 && (
+                                <span>{landSize.ngan} งาน</span>
+                              )}
+                              <span>{landSize.sqw} ตร.ว.</span>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 text-xs text-gray-600">
+                        <span className="flex items-center gap-1">
+                          <Bed className="w-3 h-3 text-[#c6af6c]" />
+                          {property.bedRoomNum}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Bath className="w-3 h-3 text-[#c6af6c]" />
+                          {property.bathRoomNum}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Maximize className="w-3 h-3 text-[#c6af6c]" />
+                          {getSize(property)} ตร.ม.
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </Card>
               </div>
@@ -948,14 +1003,37 @@ export default function PublicPropertiesPage() {
                         <MapPin className="w-4 h-4" />
                         {property.project?.projectNameTh || property.project?.projectNameEn || ""}
                       </p>
-                      <div className="flex items-center gap-3 text-xs text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Bed className="w-3 h-3" /> {property.bedRoomNum}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Bath className="w-3 h-3" /> {property.bathRoomNum}
-                        </span>
-                      </div>
+                      {property.propertyType === "Land" ? (
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          {(() => {
+                            const landSize = formatLandSize(property.landSizeSqw);
+                            if (!landSize) return <span>-</span>;
+                            return (
+                              <>
+                                {landSize.rai > 0 && (
+                                  <span className="flex items-center gap-1">
+                                    <Maximize className="w-3 h-3" />
+                                    {landSize.rai} ไร่
+                                  </span>
+                                )}
+                                {landSize.ngan > 0 && (
+                                  <span>{landSize.ngan} งาน</span>
+                                )}
+                                <span>{landSize.sqw} ตร.ว.</span>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Bed className="w-3 h-3" /> {property.bedRoomNum}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Bath className="w-3 h-3" /> {property.bathRoomNum}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </Card>
                 </Link>
@@ -1134,26 +1212,53 @@ export default function PublicPropertiesPage() {
                       )}
 
                       {/* Property Features */}
-                      <div className="flex items-center gap-3 text-xs text-gray-600 mb-2 pb-2 border-b border-gray-100">
-                        <div className="flex items-center gap-1">
-                          <Bed className="w-3 h-3 text-[#c6af6c]" />
-                          <span className="font-semibold">
-                            {property.bedRoomNum}
-                          </span>
+                      {property.propertyType === "Land" ? (
+                        <div className="flex items-center gap-2 text-xs text-gray-600 mb-2 pb-2 border-b border-gray-100">
+                          {(() => {
+                            const landSize = formatLandSize(property.landSizeSqw);
+                            if (!landSize) return <span>-</span>;
+                            return (
+                              <>
+                                {landSize.rai > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    <Maximize className="w-3 h-3 text-[#c6af6c]" />
+                                    <span className="font-semibold">{landSize.rai} ไร่</span>
+                                  </div>
+                                )}
+                                {landSize.ngan > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    <span className="font-semibold">{landSize.ngan} งาน</span>
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-1">
+                                  <span className="font-semibold">{landSize.sqw} ตร.ว.</span>
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Bath className="w-3 h-3 text-[#c6af6c]" />
-                          <span className="font-semibold">
-                            {property.bathRoomNum}
-                          </span>
+                      ) : (
+                        <div className="flex items-center gap-3 text-xs text-gray-600 mb-2 pb-2 border-b border-gray-100">
+                          <div className="flex items-center gap-1">
+                            <Bed className="w-3 h-3 text-[#c6af6c]" />
+                            <span className="font-semibold">
+                              {property.bedRoomNum}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Bath className="w-3 h-3 text-[#c6af6c]" />
+                            <span className="font-semibold">
+                              {property.bathRoomNum}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Maximize className="w-3 h-3 text-[#c6af6c]" />
+                            <span className="font-semibold">
+                              {getSize(property)} ตร.ม.
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Maximize className="w-3 h-3 text-[#c6af6c]" />
-                          <span className="font-semibold">
-                            {getSize(property)} ตร.ม.
-                          </span>
-                        </div>
-                      </div>
+                      )}
 
                       {/* Price */}
                       <div>

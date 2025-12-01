@@ -81,6 +81,7 @@ export default function PropertyDetailPage() {
   const [recommendedProperties, setRecommendedProperties] = useState<Property[]>([]);
   const [isVisible, setIsVisible] = useState(false);
   const [showLineQR, setShowLineQR] = useState(false);
+  const [showPhoneDropdown, setShowPhoneDropdown] = useState(false);
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [reviewStats, setReviewStats] = useState<{ count: number; avgRating: number }>({ count: 0, avgRating: 0 });
 
@@ -868,33 +869,32 @@ export default function PropertyDetailPage() {
                   {/* Contact Buttons */}
                   <div className="space-y-3">
                     {/* Phone Dropdown */}
-                    <div className="relative group">
-                      <Button className="w-full bg-[#c6af6c] hover:bg-[#b39d5b] text-white py-6 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all">
+                    <div className="relative">
+                      <Button
+                        className="w-full bg-[#c6af6c] hover:bg-[#b39d5b] text-white py-6 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+                        onClick={() => setShowPhoneDropdown(!showPhoneDropdown)}
+                      >
                         <Phone className="w-5 h-5 mr-2" />
                         {copiedText === "phone1" || copiedText === "phone2" ? "คัดลอกแล้ว!" : "โทรติดต่อ"}
                       </Button>
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                        <button
-                          onClick={() => copyToClipboard("0655614169", "phone1")}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-t-xl transition-colors text-left"
-                        >
-                          <Phone className="w-4 h-4 text-[#c6af6c]" />
-                          <span className="text-gray-700">065-561-4169</span>
-                          {copiedText === "phone1" && (
-                            <span className="ml-auto text-xs text-green-600">คัดลอกแล้ว!</span>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => copyToClipboard("0936642593", "phone2")}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-b-xl transition-colors border-t border-gray-100 text-left"
-                        >
-                          <Phone className="w-4 h-4 text-[#c6af6c]" />
-                          <span className="text-gray-700">093-664-2593</span>
-                          {copiedText === "phone2" && (
-                            <span className="ml-auto text-xs text-green-600">คัดลอกแล้ว!</span>
-                          )}
-                        </button>
-                      </div>
+                      {showPhoneDropdown && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-10">
+                          <a
+                            href="tel:0655614169"
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-t-xl transition-colors text-left"
+                          >
+                            <Phone className="w-4 h-4 text-[#c6af6c]" />
+                            <span className="text-gray-700">065-561-4169</span>
+                          </a>
+                          <a
+                            href="tel:0936642593"
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-b-xl transition-colors border-t border-gray-100 text-left"
+                          >
+                            <Phone className="w-4 h-4 text-[#c6af6c]" />
+                            <span className="text-gray-700">093-664-2593</span>
+                          </a>
+                        </div>
+                      )}
                     </div>
                     <Button
                       variant="outline"

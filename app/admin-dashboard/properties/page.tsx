@@ -81,6 +81,7 @@ interface Property {
   bathRoomNum: number;
   roomSizeNum: number;
   usableAreaSqm: number;
+  landSizeSqw: number | null;
   imageUrls: string[];
   rentalRateNum: number;
   sellPriceNum: number;
@@ -326,6 +327,15 @@ export default function PropertiesListPage() {
     return labels[type] || type;
   };
 
+  // Helper function to format land size in Thai units (rai-ngan-wa)
+  const formatLandSize = (landSizeSqw: number | null) => {
+    if (!landSizeSqw) return null;
+    const rai = Math.floor(landSizeSqw / 400);
+    const ngan = Math.floor((landSizeSqw % 400) / 100);
+    const sqw = landSizeSqw % 100;
+    return { rai, ngan, sqw };
+  };
+
   const totalPages = Math.ceil(total / 10);
 
   return (
@@ -498,22 +508,49 @@ export default function PropertiesListPage() {
                   </div>
 
                   {/* Features */}
-                  <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <Bed className="w-4 h-4" />
-                      <span>{property.bedRoomNum}</span>
+                  {property.propertyType === "Land" ? (
+                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                      {(() => {
+                        const landSize = formatLandSize(property.landSizeSqw);
+                        if (!landSize) return <span>-</span>;
+                        return (
+                          <>
+                            {landSize.rai > 0 && (
+                              <div className="flex items-center gap-1">
+                                <Maximize className="w-4 h-4 text-[#c6af6c]" />
+                                <span>{landSize.rai} ไร่</span>
+                              </div>
+                            )}
+                            {landSize.ngan > 0 && (
+                              <div className="flex items-center gap-1">
+                                <span>{landSize.ngan} งาน</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1">
+                              <span>{landSize.sqw} ตร.ว.</span>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Bath className="w-4 h-4" />
-                      <span>{property.bathRoomNum}</span>
+                  ) : (
+                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Bed className="w-4 h-4" />
+                        <span>{property.bedRoomNum}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Bath className="w-4 h-4" />
+                        <span>{property.bathRoomNum}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Maximize className="w-4 h-4" />
+                        <span>
+                          {property.roomSizeNum || property.usableAreaSqm || "-"} ตร.ม.
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Maximize className="w-4 h-4" />
-                      <span>
-                        {property.roomSizeNum || property.usableAreaSqm || "-"} ตร.ม.
-                      </span>
-                    </div>
-                  </div>
+                  )}
 
                   {/* Price */}
                   <div className="mt-2">
