@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -74,7 +74,6 @@ export default function PropertyDetailPage() {
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -84,6 +83,7 @@ export default function PropertyDetailPage() {
   const [showPhoneDropdown, setShowPhoneDropdown] = useState(false);
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [reviewStats, setReviewStats] = useState<{ count: number; avgRating: number }>({ count: 0, avgRating: 0 });
+  const phoneDropdownRef = useRef<HTMLDivElement>(null);
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -151,6 +151,19 @@ export default function PropertyDetailPage() {
     const timer = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timer);
   }, []);
+
+  // Close phone dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (phoneDropdownRef.current && !phoneDropdownRef.current.contains(event.target as Node)) {
+        setShowPhoneDropdown(false);
+      }
+    };
+    if (showPhoneDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showPhoneDropdown]);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -869,13 +882,13 @@ export default function PropertyDetailPage() {
                   {/* Contact Buttons */}
                   <div className="space-y-3">
                     {/* Phone Dropdown */}
-                    <div className="relative">
+                    <div className="relative" ref={phoneDropdownRef}>
                       <Button
                         className="w-full bg-[#c6af6c] hover:bg-[#b39d5b] text-white py-6 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
                         onClick={() => setShowPhoneDropdown(!showPhoneDropdown)}
                       >
                         <Phone className="w-5 h-5 mr-2" />
-                        {copiedText === "phone1" || copiedText === "phone2" ? "คัดลอกแล้ว!" : "โทรติดต่อ"}
+                        โทรติดต่อ
                       </Button>
                       {showPhoneDropdown && (
                         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-10">
