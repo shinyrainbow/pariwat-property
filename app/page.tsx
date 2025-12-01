@@ -613,11 +613,24 @@ export default function PublicPropertiesPage() {
                         Popular
                       </div>
                     )}
+                    {/* Listing Type Badges */}
+                    <div className="absolute top-3 right-3 flex gap-1">
+                      {property.rentalRateNum && property.rentalRateNum > 0 && (
+                        <span className="px-2 py-1 rounded-full text-xs font-semibold text-white bg-emerald-500">
+                          เช่า
+                        </span>
+                      )}
+                      {property.sellPriceNum && property.sellPriceNum > 0 && (
+                        <span className="px-2 py-1 rounded-full text-xs font-semibold text-white bg-amber-500">
+                          ขาย
+                        </span>
+                      )}
+                    </div>
                     <div className="absolute bottom-3 left-3 right-3">
                       <p className="text-white font-bold text-lg line-clamp-1 drop-shadow-lg">
                         {property.rentalRateNum
-                          ? `฿${formatPrice(property.rentalRateNum)}/เดือน`
-                          : `฿${formatPrice(property.sellPriceNum)}`}
+                          ? `เช่า: ฿${formatPrice(property.rentalRateNum)}/เดือน`
+                          : `ขาย: ฿${formatPrice(property.sellPriceNum)}`}
                       </p>
                     </div>
                   </div>
@@ -922,8 +935,8 @@ export default function PublicPropertiesPage() {
                       <div className="absolute bottom-4 left-4 right-4 text-white">
                         <p className="text-2xl font-bold">
                           {property.rentalRateNum
-                            ? `฿${formatPrice(property.rentalRateNum)}/เดือน`
-                            : `฿${formatPrice(property.sellPriceNum)}`}
+                            ? `เช่า: ฿${formatPrice(property.rentalRateNum)}/เดือน`
+                            : `ขาย: ฿${formatPrice(property.sellPriceNum)}`}
                         </p>
                       </div>
                     </div>
@@ -1089,11 +1102,6 @@ export default function PublicPropertiesPage() {
                           : "บ้านเดี่ยว"}
                       </div>
 
-                      {/* Rating Badge */}
-                      <div className="absolute bottom-2 left-2 bg-[#c6af6c]/95 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-                        <Star className="w-3 h-3 fill-white" />
-                        4.8
-                      </div>
 
                       {/* View Details Button (Appears on Hover) */}
                       <div className="absolute inset-x-0 bottom-0 p-2 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
@@ -1116,12 +1124,14 @@ export default function PublicPropertiesPage() {
                         </div>
                       )}
 
-                      {/* Property Title */}
-                      <h3 className="font-bold text-sm mb-2 line-clamp-2 h-10 text-gray-900 group-hover:text-[#c6af6c] transition-colors duration-300">
-                        {property.propertyTitleTh ||
-                          property.propertyTitleEn ||
-                          "ไม่ระบุชื่อ"}
-                      </h3>
+                      {/* Property Title - only show if not Condo */}
+                      {property.propertyType !== "Condo" && (
+                        <h3 className="font-bold text-sm mb-2 line-clamp-2 h-10 text-gray-900 group-hover:text-[#c6af6c] transition-colors duration-300">
+                          {property.propertyTitleTh ||
+                            property.propertyTitleEn ||
+                            "ไม่ระบุชื่อ"}
+                        </h3>
+                      )}
 
                       {/* Property Features */}
                       <div className="flex items-center gap-3 text-xs text-gray-600 mb-2 pb-2 border-b border-gray-100">

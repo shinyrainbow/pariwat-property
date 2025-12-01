@@ -82,6 +82,7 @@ export default function PropertyDetailPage() {
   const [isVisible, setIsVisible] = useState(false);
   const [showLineQR, setShowLineQR] = useState(false);
   const [copiedText, setCopiedText] = useState<string | null>(null);
+  const [reviewStats, setReviewStats] = useState<{ count: number; avgRating: number }>({ count: 0, avgRating: 0 });
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -241,8 +242,24 @@ export default function PropertyDetailPage() {
       }
     };
 
+    const fetchReviewStats = async () => {
+      try {
+        const res = await fetch("/api/public/reviews");
+        const data = await res.json();
+        if (data.success && data.data.length > 0) {
+          const reviews = data.data;
+          const totalRating = reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0);
+          const avgRating = totalRating / reviews.length;
+          setReviewStats({ count: reviews.length, avgRating: Math.round(avgRating * 10) / 10 });
+        }
+      } catch (error) {
+        console.error("Failed to fetch review stats:", error);
+      }
+    };
+
     if (params.id) {
       fetchProperty();
+      fetchReviewStats();
     }
   }, [params.id]);
 
@@ -837,11 +854,13 @@ export default function PropertyDetailPage() {
                       <div className="text-sm text-gray-500">
                         ตัวแทนอสังหาริมทรัพย์
                       </div>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                        <span className="text-sm font-medium">4.9</span>
-                        <span className="text-xs text-gray-400">(128 รีวิว)</span>
-                      </div>
+                      {reviewStats.count > 0 && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                          <span className="text-sm font-medium text-gray-600">{reviewStats.avgRating}</span>
+                          <span className="text-xs text-gray-400">({reviewStats.count} รีวิว)</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1094,6 +1113,7 @@ export default function PropertyDetailPage() {
                         <div className="pt-3 border-t border-gray-100">
                           {rec.rentalRateNum != null && rec.rentalRateNum > 0 && (
                             <div className="text-lg font-bold text-[#c6af6c]">
+                              <span className="text-xs font-normal text-gray-500 mr-1">เช่า:</span>
                               ฿{formatPrice(rec.rentalRateNum)}
                               <span className="text-xs font-normal text-gray-500">
                                 /เดือน
@@ -1102,9 +1122,7 @@ export default function PropertyDetailPage() {
                           )}
                           {rec.sellPriceNum != null && rec.sellPriceNum > 0 && (
                             <div className={`text-lg font-bold text-[#c6af6c] ${rec.rentalRateNum != null && rec.rentalRateNum > 0 ? "text-sm mt-1" : ""}`}>
-                              {rec.rentalRateNum != null && rec.rentalRateNum > 0 && (
-                                <span className="text-xs font-normal text-gray-500 mr-1">ขาย</span>
-                              )}
+                              <span className="text-xs font-normal text-gray-500 mr-1">ขาย:</span>
                               ฿{formatPrice(rec.sellPriceNum)}
                             </div>
                           )}

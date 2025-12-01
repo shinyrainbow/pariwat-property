@@ -18,7 +18,6 @@ import {
   Maximize,
   MapPin,
   Search,
-  Star,
   X,
   SlidersHorizontal,
   Grid3X3,
@@ -681,13 +680,6 @@ function SearchContent() {
                           )}
                         </div>
 
-                        {/* Popular Star Rating */}
-                        {property.extension?.isFeaturedPopular && (
-                          <div className="absolute bottom-2 left-2 bg-[#c6af6c]/95 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-                            <Star className="w-3 h-3 fill-white" />
-                            แนะนำ
-                          </div>
-                        )}
                       </div>
 
                       {/* Property Details */}
@@ -730,6 +722,7 @@ function SearchContent() {
                           {property.rentalRateNum != null &&
                             property.rentalRateNum > 0 && (
                               <div className="text-lg font-bold text-[#c6af6c]">
+                                <span className="text-xs font-normal text-gray-500 mr-1">เช่า:</span>
                                 ฿{formatPrice(property.rentalRateNum)}
                                 <span className="text-xs font-normal text-gray-600">
                                   /เดือน
@@ -738,10 +731,8 @@ function SearchContent() {
                             )}
                           {property.sellPriceNum != null &&
                             property.sellPriceNum > 0 && (
-                              <div className={`font-bold text-[#c6af6c] ${property.rentalRateNum != null && property.rentalRateNum > 0 ? "text-sm" : "text-lg"}`}>
-                                {property.rentalRateNum != null && property.rentalRateNum > 0 && (
-                                  <span className="text-xs font-normal text-gray-500 mr-1">ขาย</span>
-                                )}
+                              <div className={`font-bold text-[#c6af6c] ${property.rentalRateNum != null && property.rentalRateNum > 0 ? "text-sm mt-1" : "text-lg"}`}>
+                                <span className="text-xs font-normal text-gray-500 mr-1">ขาย:</span>
                                 ฿{formatPrice(property.sellPriceNum)}
                               </div>
                             )}
