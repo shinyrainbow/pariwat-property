@@ -709,7 +709,13 @@ export default function PropertiesListPage() {
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-sm text-gray-500 mb-1">ทรัพย์สินที่เลือก</p>
                 <p className="font-medium text-gray-900">
-                  {showPromotionModal.agentPropertyCode || showPromotionModal.id.slice(0, 8)} - {showPromotionModal.propertyTitleTh || showPromotionModal.propertyTitleEn}
+                  {showPromotionModal.propertyTitleTh || showPromotionModal.propertyTitleEn}
+                </p>
+                <p className="text-sm text-gray-500">
+                  รหัส: {showPromotionModal.agentPropertyCode || showPromotionModal.id.slice(0, 8)}
+                  {showPromotionModal.project && (
+                    <span> • {showPromotionModal.project.projectNameTh || showPromotionModal.project.projectNameEn}</span>
+                  )}
                 </p>
               </div>
 

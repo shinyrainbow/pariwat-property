@@ -503,7 +503,6 @@ export default function AdminPromotionsPage() {
                     }))
                   }
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#c6af6c] text-gray-900"
-                  disabled={!!editingPromotion}
                 >
                   <option value="">เลือกทรัพย์สิน</option>
                   {properties.map((p) => (

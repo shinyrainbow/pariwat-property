@@ -136,7 +136,7 @@ function SignInForm() {
         </form>
 
         {/* Admin Credentials Info */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        {/* <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-xs text-blue-800 font-medium mb-1">
             Admin:
           </p>
@@ -145,7 +145,7 @@ function SignInForm() {
             <br />
             Password: admin123
           </p>
-        </div>
+        </div> */}
       </Card>
     </>
   );
