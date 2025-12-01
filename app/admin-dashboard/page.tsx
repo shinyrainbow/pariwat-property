@@ -55,6 +55,10 @@ interface DashboardData {
     propertyTitleTh: string;
     propertyType: string;
     imageUrl: string | null;
+    project: {
+      projectNameTh: string;
+      projectNameEn: string;
+    } | null;
   }>;
 }
 
@@ -394,6 +398,9 @@ export default function AdminDashboardPage() {
                   <p className="text-xs text-gray-500">
                     {property.agentPropertyCode} •{" "}
                     {getPropertyTypeLabel(property.propertyType)}
+                    {property.propertyType === "Condo" && property.project?.projectNameEn && (
+                      <> • {property.project.projectNameEn}</>
+                    )}
                   </p>
                 </div>
                 <div className="text-right">
@@ -452,6 +459,9 @@ export default function AdminDashboardPage() {
                     </p>
                     <p className="text-xs text-gray-500">
                       {getPropertyTypeLabel(property.propertyType)}
+                      {property.propertyType === "Condo" && property.project?.projectNameEn && (
+                        <> • {property.project.projectNameEn}</>
+                      )}
                     </p>
                   </div>
                   <Tag className="w-5 h-5 text-amber-500" />

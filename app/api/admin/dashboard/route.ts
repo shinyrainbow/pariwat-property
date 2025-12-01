@@ -153,6 +153,7 @@ export async function GET() {
         propertyTitleTh: p.propertyTitleTh,
         propertyType: p.propertyType,
         imageUrl: p.imageUrls?.[0] || null,
+        project: p.project,
       }));
 
     return NextResponse.json({
