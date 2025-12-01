@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,8 +15,6 @@ import {
   Phone,
   Mail,
   ArrowLeft,
-  Share2,
-  Heart,
   ChevronLeft,
   ChevronRight,
   Home,
@@ -73,17 +71,13 @@ export default function PropertyDetailPage() {
   const router = useRouter();
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [scrollY, setScrollY] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [recommendedProperties, setRecommendedProperties] = useState<Property[]>([]);
   const [isVisible, setIsVisible] = useState(false);
   const [showLineQR, setShowLineQR] = useState(false);
-  const [showPhoneDropdown, setShowPhoneDropdown] = useState(false);
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [reviewStats, setReviewStats] = useState<{ count: number; avgRating: number }>({ count: 0, avgRating: 0 });
-  const phoneDropdownRef = useRef<HTMLDivElement>(null);
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -150,25 +144,6 @@ export default function PropertyDetailPage() {
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timer);
-  }, []);
-
-  // Close phone dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (phoneDropdownRef.current && !phoneDropdownRef.current.contains(event.target as Node)) {
-        setShowPhoneDropdown(false);
-      }
-    };
-    if (showPhoneDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showPhoneDropdown]);
-
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Handle keyboard navigation in lightbox
@@ -290,22 +265,6 @@ export default function PropertyDetailPage() {
     return property.usableAreaSqm ? `${property.usableAreaSqm}` : "-";
   };
 
-  const nextImage = () => {
-    if (property && property.imageUrls.length > 1) {
-      setCurrentImageIndex((prev) =>
-        prev === property.imageUrls.length - 1 ? 0 : prev + 1
-      );
-    }
-  };
-
-  const prevImage = () => {
-    if (property && property.imageUrls.length > 1) {
-      setCurrentImageIndex((prev) =>
-        prev === 0 ? property.imageUrls.length - 1 : prev - 1
-      );
-    }
-  };
-
   const getPropertyTypeLabel = (type: string) => {
     switch (type) {
       case "Condo":
@@ -314,19 +273,6 @@ export default function PropertyDetailPage() {
         return "ทาวน์เฮ้าส์";
       case "SingleHouse":
         return "บ้านเดี่ยว";
-      default:
-        return type;
-    }
-  };
-
-  const getListingTypeLabel = (type: string) => {
-    switch (type) {
-      case "rent":
-        return "ให้เช่า";
-      case "sale":
-        return "ขาย";
-      case "both":
-        return "ขาย/เช่า";
       default:
         return type;
     }
@@ -881,34 +827,14 @@ export default function PropertyDetailPage() {
 
                   {/* Contact Buttons */}
                   <div className="space-y-3">
-                    {/* Phone Dropdown */}
-                    <div className="relative" ref={phoneDropdownRef}>
-                      <Button
-                        className="w-full bg-[#c6af6c] hover:bg-[#b39d5b] text-white py-6 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
-                        onClick={() => setShowPhoneDropdown(!showPhoneDropdown)}
-                      >
-                        <Phone className="w-5 h-5 mr-2" />
-                        โทรติดต่อ
-                      </Button>
-                      {showPhoneDropdown && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-10">
-                          <a
-                            href="tel:0655614169"
-                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-t-xl transition-colors text-left"
-                          >
-                            <Phone className="w-4 h-4 text-[#c6af6c]" />
-                            <span className="text-gray-700">065-561-4169</span>
-                          </a>
-                          <a
-                            href="tel:0936642593"
-                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-b-xl transition-colors border-t border-gray-100 text-left"
-                          >
-                            <Phone className="w-4 h-4 text-[#c6af6c]" />
-                            <span className="text-gray-700">093-664-2593</span>
-                          </a>
-                        </div>
-                      )}
-                    </div>
+                    {/* Phone Button */}
+                    <Button
+                      className="w-full bg-[#c6af6c] hover:bg-[#b39d5b] text-white py-6 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+                      onClick={() => copyToClipboard("0655614169", "phone")}
+                    >
+                      <Phone className="w-5 h-5 mr-2" />
+                      {copiedText === "phone" ? "คัดลอกแล้ว!" : "065-561-4169"}
+                    </Button>
                     <Button
                       variant="outline"
                       className="w-full border-2 border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white py-6 text-base font-semibold rounded-xl transition-all"
