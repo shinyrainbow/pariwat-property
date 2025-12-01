@@ -45,6 +45,7 @@ export default function InquiriesPage() {
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
   const [notes, setNotes] = useState("");
+  const [modalStatus, setModalStatus] = useState("");
   const [updating, setUpdating] = useState(false);
 
   const fetchInquiries = async () => {
@@ -69,30 +70,50 @@ export default function InquiriesPage() {
     fetchInquiries();
   }, [filterStatus]);
 
-  const handleStatusUpdate = async (id: string, newStatus: string) => {
+  const handleSaveInquiry = async () => {
+    if (!selectedInquiry) return;
+
     setUpdating(true);
     try {
-      const response = await fetch(`/api/admin/inquiries/${id}`, {
+      const response = await fetch(`/api/admin/inquiries/${selectedInquiry.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus, notes }),
+        body: JSON.stringify({ status: modalStatus, notes }),
       });
 
       if (response.ok) {
         // Update local state
         setInquiries((prev) =>
           prev.map((inq) =>
-            inq.id === id ? { ...inq, status: newStatus, notes } : inq
+            inq.id === selectedInquiry.id ? { ...inq, status: modalStatus, notes } : inq
           )
         );
-        if (selectedInquiry?.id === id) {
-          setSelectedInquiry({ ...selectedInquiry, status: newStatus, notes });
-        }
+        setSelectedInquiry(null);
       }
     } catch (error) {
       console.error("Failed to update inquiry:", error);
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleQuickStatusUpdate = async (id: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/admin/inquiries/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        setInquiries((prev) =>
+          prev.map((inq) =>
+            inq.id === id ? { ...inq, status: newStatus } : inq
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Failed to update inquiry:", error);
     }
   };
 
@@ -213,6 +234,7 @@ export default function InquiriesPage() {
                 onClick={() => {
                   setSelectedInquiry(inquiry);
                   setNotes(inquiry.notes || "");
+                  setModalStatus(inquiry.status);
                 }}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start gap-4">
@@ -290,7 +312,7 @@ export default function InquiriesPage() {
                         className="text-green-600 border-green-600 hover:bg-green-50"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleStatusUpdate(inquiry.id, inquiry.status === "new" ? "contacted" : "resolved");
+                          handleQuickStatusUpdate(inquiry.id, inquiry.status === "new" ? "contacted" : "resolved");
                         }}
                         disabled={updating}
                       >
@@ -308,7 +330,7 @@ export default function InquiriesPage() {
       {/* Detail Modal */}
       {selectedInquiry && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white">
             <div className="p-6">
               {/* Header */}
               <div className="flex items-start justify-between mb-6">
@@ -385,15 +407,14 @@ export default function InquiriesPage() {
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {statusOptions.map((option) => {
-                      const isActive = selectedInquiry.status === option.value;
+                      const isActive = modalStatus === option.value;
                       return (
                         <Button
                           key={option.value}
                           size="sm"
                           variant={isActive ? "default" : "outline"}
                           className={isActive ? "bg-[#c6af6c] hover:bg-[#b39d5b]" : ""}
-                          onClick={() => handleStatusUpdate(selectedInquiry.id, option.value)}
-                          disabled={updating}
+                          onClick={() => setModalStatus(option.value)}
                         >
                           <option.icon className="w-4 h-4 mr-1" />
                           {option.label}
@@ -417,7 +438,7 @@ export default function InquiriesPage() {
                   <Button
                     size="sm"
                     className="mt-2 bg-[#c6af6c] hover:bg-[#b39d5b]"
-                    onClick={() => handleStatusUpdate(selectedInquiry.id, selectedInquiry.status)}
+                    onClick={handleSaveInquiry}
                     disabled={updating}
                   >
                     บันทึก

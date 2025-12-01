@@ -19,6 +19,8 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
+import { toast } from "sonner";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface OtherService {
   id: string;
@@ -40,6 +42,7 @@ export default function AdminOtherServicesPage() {
   const [editingService, setEditingService] = useState<OtherService | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { confirm } = useConfirmDialog();
   const [formData, setFormData] = useState({
     title: "",
     titleEn: "",
@@ -69,11 +72,11 @@ export default function AdminOtherServicesPage() {
       if (data.success) {
         setFormData({ ...formData, imageUrl: data.data.url });
       } else {
-        alert(data.error || "อัปโหลดไม่สำเร็จ");
+        toast.error(data.error || "อัปโหลดไม่สำเร็จ");
       }
     } catch (error) {
       console.error("Upload failed:", error);
-      alert("อัปโหลดไม่สำเร็จ");
+      toast.error("อัปโหลดไม่สำเร็จ");
     } finally {
       setUploading(false);
       // Reset file input
@@ -131,7 +134,14 @@ export default function AdminOtherServicesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบบริการนี้?")) return;
+    const confirmed = await confirm({
+      title: "ยืนยันการลบ",
+      message: "คุณแน่ใจหรือไม่ว่าต้องการลบบริการนี้?",
+      confirmText: "ลบ",
+      cancelText: "ยกเลิก",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setUpdating(id);
     try {
@@ -140,10 +150,12 @@ export default function AdminOtherServicesPage() {
       });
 
       if (res.ok) {
+        toast.success("ลบบริการเรียบร้อยแล้ว");
         fetchServices();
       }
     } catch (error) {
       console.error("Failed to delete service:", error);
+      toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
     } finally {
       setUpdating(null);
     }
@@ -427,6 +439,7 @@ export default function AdminOtherServicesPage() {
                     setFormData({ ...formData, title: e.target.value })
                   }
                   placeholder="เช่น: บริการทำความสะอาด"
+                  className="text-gray-900"
                 />
               </div>
 
@@ -440,6 +453,7 @@ export default function AdminOtherServicesPage() {
                     setFormData({ ...formData, titleEn: e.target.value })
                   }
                   placeholder="e.g., Cleaning Service"
+                  className="text-gray-900"
                 />
               </div>
 
@@ -453,7 +467,7 @@ export default function AdminOtherServicesPage() {
                     setFormData({ ...formData, description: e.target.value })
                   }
                   placeholder="รายละเอียดเกี่ยวกับบริการ..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm min-h-[100px] focus:outline-none focus:ring-2 focus:ring-[#c6af6c] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm min-h-[100px] focus:outline-none focus:ring-2 focus:ring-[#c6af6c] focus:border-transparent text-gray-900"
                 />
               </div>
 
@@ -490,13 +504,13 @@ export default function AdminOtherServicesPage() {
                     {uploading ? (
                       <div className="flex flex-col items-center">
                         <Loader2 className="w-8 h-8 text-[#c6af6c] animate-spin mb-2" />
-                        <p className="text-sm text-gray-500">กำลังอัปโหลด...</p>
+                        <p className="text-sm text-gray-700">กำลังอัปโหลด...</p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center">
-                        <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                        <p className="text-sm text-gray-600 font-medium">คลิกเพื่ออัปโหลดรูปภาพ</p>
-                        <p className="text-xs text-gray-400 mt-1">JPEG, PNG, WebP หรือ GIF (สูงสุด 5MB)</p>
+                        <Upload className="w-8 h-8 text-gray-500 mb-2" />
+                        <p className="text-sm text-gray-900 font-medium">คลิกเพื่ออัปโหลดรูปภาพ</p>
+                        <p className="text-xs text-gray-600 mt-1">JPEG, PNG, WebP หรือ GIF (สูงสุด 5MB)</p>
                       </div>
                     )}
                   </div>
@@ -514,7 +528,7 @@ export default function AdminOtherServicesPage() {
                 {/* Or Enter URL */}
                 <div className="flex items-center gap-2 mt-2">
                   <div className="flex-1 h-px bg-gray-200" />
-                  <span className="text-xs text-gray-400">หรือใส่ URL</span>
+                  <span className="text-xs text-gray-700">หรือใส่ URL</span>
                   <div className="flex-1 h-px bg-gray-200" />
                 </div>
                 <Input
@@ -523,7 +537,7 @@ export default function AdminOtherServicesPage() {
                     setFormData({ ...formData, imageUrl: e.target.value })
                   }
                   placeholder="https://example.com/image.jpg"
-                  className="mt-2"
+                  className="mt-2 text-gray-900"
                 />
               </div>
 
@@ -537,6 +551,7 @@ export default function AdminOtherServicesPage() {
                     setFormData({ ...formData, linkUrl: e.target.value })
                   }
                   placeholder="https://example.com/service"
+                  className="text-gray-900"
                 />
               </div>
 
@@ -551,6 +566,7 @@ export default function AdminOtherServicesPage() {
                     setFormData({ ...formData, order: parseInt(e.target.value) || 0 })
                   }
                   min={0}
+                  className="text-gray-900"
                 />
               </div>
 

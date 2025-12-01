@@ -22,8 +22,13 @@ import {
   CheckCircle,
   XCircle,
   Flame,
+  Sparkles,
+  Award,
+  X,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
+import { toast } from "sonner";
 
 interface Promotion {
   id: string;
@@ -84,6 +89,13 @@ interface Property {
   extension: PropertyExtension | null;
 }
 
+const PROMOTION_TYPES = [
+  { value: "hot", label: "HOT", color: "bg-red-500", icon: Flame },
+  { value: "new", label: "NEW", color: "bg-green-500", icon: Sparkles },
+  { value: "discount", label: "DISCOUNT", color: "bg-blue-500", icon: Percent },
+  { value: "featured", label: "FEATURED", color: "bg-purple-500", icon: Award },
+];
+
 export default function PropertiesListPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +108,14 @@ export default function PropertiesListPage() {
 
   // Modal states
   const [showPromotionModal, setShowPromotionModal] = useState<Property | null>(null);
-  const [promotionForm, setPromotionForm] = useState({ label: "", type: "discount" });
+  const [promotionForm, setPromotionForm] = useState({
+    label: "",
+    type: "hot" as "hot" | "new" | "discount" | "featured",
+    startDate: "",
+    endDate: "",
+    isActive: true,
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchProperties = async () => {
     setLoading(true);
@@ -220,15 +239,25 @@ export default function PropertiesListPage() {
     }
   };
 
-  const handleAddPromotion = async () => {
-    if (!showPromotionModal || !promotionForm.label) return;
+  const handleAddPromotion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showPromotionModal || !promotionForm.label || !promotionForm.type) {
+      toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
+      return;
+    }
 
-    setUpdating(showPromotionModal.id);
+    setSubmitting(true);
     try {
       const res = await fetch(`/api/admin/extensions/${showPromotionModal.id}/promotions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(promotionForm),
+        body: JSON.stringify({
+          label: promotionForm.label,
+          type: promotionForm.type,
+          startDate: promotionForm.startDate || null,
+          endDate: promotionForm.endDate || null,
+          isActive: promotionForm.isActive,
+        }),
       });
 
       if (res.ok) {
@@ -242,12 +271,16 @@ export default function PropertiesListPage() {
           )
         );
         setShowPromotionModal(null);
-        setPromotionForm({ label: "", type: "discount" });
+        setPromotionForm({ label: "", type: "hot", startDate: "", endDate: "", isActive: true });
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "เกิดข้อผิดพลาด");
       }
     } catch (error) {
       console.error("Failed to add promotion:", error);
+      toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
     } finally {
-      setUpdating(null);
+      setSubmitting(false);
     }
   };
 
@@ -500,22 +533,31 @@ export default function PropertiesListPage() {
                   {/* Promotions list */}
                   {property.extension?.promotions && property.extension.promotions.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
-                      {property.extension.promotions.map((promo) => (
-                        <span
-                          key={promo.id}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs"
-                        >
-                          <Percent className="w-3 h-3" />
-                          {promo.label}
-                          <button
-                            onClick={() => handleRemovePromotion(property.id, promo.id)}
-                            className="ml-1 hover:text-red-900"
-                            disabled={updating === property.id}
+                      {property.extension.promotions.map((promo) => {
+                        const typeInfo = PROMOTION_TYPES.find((t) => t.value === promo.type);
+                        const Icon = typeInfo?.icon || Percent;
+                        const bgColor = typeInfo?.value === "hot" ? "bg-red-100 text-red-700" :
+                                       typeInfo?.value === "new" ? "bg-green-100 text-green-700" :
+                                       typeInfo?.value === "discount" ? "bg-blue-100 text-blue-700" :
+                                       typeInfo?.value === "featured" ? "bg-purple-100 text-purple-700" :
+                                       "bg-red-100 text-red-700";
+                        return (
+                          <span
+                            key={promo.id}
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${bgColor}`}
                           >
-                            <XCircle className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
+                            <Icon className="w-3 h-3" />
+                            {promo.label}
+                            <button
+                              onClick={() => handleRemovePromotion(property.id, promo.id)}
+                              className="ml-1 hover:opacity-70"
+                              disabled={updating === property.id}
+                            >
+                              <XCircle className="w-3 h-3" />
+                            </button>
+                          </span>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -646,64 +688,170 @@ export default function PropertiesListPage() {
       {/* Promotion Modal */}
       {showPromotionModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md p-6 bg-white">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              เพิ่มโปรโมชั่น
-            </h3>
-            <p className="text-sm text-gray-500 mb-4">
-              {showPromotionModal.propertyTitleTh || showPromotionModal.propertyTitleEn}
-            </p>
-            <div className="space-y-4">
+          <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold text-gray-900">
+                เพิ่มโปรโมชันใหม่
+              </h2>
+              <button
+                onClick={() => {
+                  setShowPromotionModal(null);
+                  setPromotionForm({ label: "", type: "hot", startDate: "", endDate: "", isActive: true });
+                }}
+                className="p-1 hover:bg-gray-100 rounded text-gray-900"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddPromotion} className="p-4 space-y-4">
+              {/* Property Info (Read-only) */}
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-sm text-gray-500 mb-1">ทรัพย์สินที่เลือก</p>
+                <p className="font-medium text-gray-900">
+                  {showPromotionModal.agentPropertyCode || showPromotionModal.id.slice(0, 8)} - {showPromotionModal.propertyTitleTh || showPromotionModal.propertyTitleEn}
+                </p>
+              </div>
+
+              {/* Label */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  ข้อความโปรโมชั่น
+                  ชื่อโปรโมชัน *
                 </label>
                 <Input
                   value={promotionForm.label}
-                  onChange={(e) => setPromotionForm({ ...promotionForm, label: e.target.value })}
-                  placeholder="เช่น: ลด 10%, ฟรีค่าโอน"
+                  onChange={(e) =>
+                    setPromotionForm((prev) => ({ ...prev, label: e.target.value }))
+                  }
+                  placeholder="เช่น ลด 10%, ฟรีค่าโอน"
                 />
               </div>
+
+              {/* Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  ประเภท
+                  ประเภท *
                 </label>
-                <Select
-                  value={promotionForm.type}
-                  onValueChange={(v) => setPromotionForm({ ...promotionForm, type: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="discount">ส่วนลด</SelectItem>
-                    <SelectItem value="free">ฟรี</SelectItem>
-                    <SelectItem value="special">พิเศษ</SelectItem>
-                    <SelectItem value="limited">จำกัดเวลา</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-2 gap-2">
+                  {PROMOTION_TYPES.map((type) => {
+                    const Icon = type.icon;
+                    return (
+                      <button
+                        key={type.value}
+                        type="button"
+                        onClick={() =>
+                          setPromotionForm((prev) => ({
+                            ...prev,
+                            type: type.value as typeof promotionForm.type,
+                          }))
+                        }
+                        className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors ${
+                          promotionForm.type === type.value
+                            ? "border-[#c6af6c] bg-[#c6af6c]/5"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div
+                          className={`w-8 h-8 ${type.color} rounded flex items-center justify-center`}
+                        >
+                          <Icon className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="text-sm font-medium text-gray-900">{type.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-            <div className="flex gap-3 justify-end mt-6">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowPromotionModal(null);
-                  setPromotionForm({ label: "", type: "discount" });
-                }}
-                disabled={updating === showPromotionModal.id}
-              >
-                ยกเลิก
-              </Button>
-              <Button
-                className="bg-[#c6af6c] hover:bg-[#b39d5b] text-white"
-                onClick={handleAddPromotion}
-                disabled={updating === showPromotionModal.id || !promotionForm.label}
-              >
-                {updating === showPromotionModal.id ? "กำลังเพิ่ม..." : "เพิ่มโปรโมชั่น"}
-              </Button>
-            </div>
-          </Card>
+
+              {/* Date Range */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    วันเริ่มต้น
+                  </label>
+                  <Input
+                    type="date"
+                    value={promotionForm.startDate}
+                    onChange={(e) =>
+                      setPromotionForm((prev) => ({
+                        ...prev,
+                        startDate: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    วันสิ้นสุด
+                  </label>
+                  <Input
+                    type="date"
+                    value={promotionForm.endDate}
+                    onChange={(e) =>
+                      setPromotionForm((prev) => ({
+                        ...prev,
+                        endDate: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Active Toggle */}
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm font-medium text-gray-700">
+                  เปิดใช้งาน
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPromotionForm((prev) => ({
+                      ...prev,
+                      isActive: !prev.isActive,
+                    }))
+                  }
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    promotionForm.isActive ? "bg-[#c6af6c]" : "bg-gray-200"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      promotionForm.isActive ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowPromotionModal(null);
+                    setPromotionForm({ label: "", type: "hot", startDate: "", endDate: "", isActive: true });
+                  }}
+                >
+                  ยกเลิก
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1 bg-[#c6af6c] hover:bg-[#b39d5b] text-white"
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      กำลังบันทึก...
+                    </>
+                  ) : (
+                    "เพิ่มโปรโมชัน"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

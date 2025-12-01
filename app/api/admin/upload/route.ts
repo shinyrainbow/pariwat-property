@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import { existsSync } from "fs";
+import { v2 as cloudinary } from "cloudinary";
 
-// POST /api/admin/upload - Upload an image
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// POST /api/admin/upload - Upload image to Cloudinary
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
@@ -17,6 +22,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get form data
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 
@@ -28,8 +34,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
-    if (!validTypes.includes(file.type)) {
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         { success: false, error: "Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed." },
         { status: 400 }
@@ -45,38 +51,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
-    }
-
-    // Generate unique filename
-    const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).substring(2, 8);
-    const extension = file.name.split(".").pop() || "jpg";
-    const filename = `${timestamp}-${randomStr}.${extension}`;
-
-    // Save file
+    // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const filePath = path.join(uploadsDir, filename);
-    await writeFile(filePath, buffer);
 
-    // Return the URL
-    const url = `/uploads/${filename}`;
+    // Upload to Cloudinary
+    const result = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          folder: "pariwat-property/services",
+          resource_type: "image",
+          transformation: [
+            { width: 1200, height: 800, crop: "limit" },
+            { quality: "auto:good" },
+            { fetch_format: "auto" },
+          ],
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else if (result) {
+            resolve({ secure_url: result.secure_url, public_id: result.public_id });
+          } else {
+            reject(new Error("Upload failed"));
+          }
+        }
+      ).end(buffer);
+    });
 
     return NextResponse.json({
       success: true,
       data: {
-        url,
-        filename,
+        url: result.secure_url,
+        publicId: result.public_id,
       },
     });
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to upload file" },
+      { success: false, error: "Failed to upload image" },
       { status: 500 }
     );
   }

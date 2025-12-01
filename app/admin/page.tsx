@@ -1,7 +1,7 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useState, Suspense } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import Link from "next/link";
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
   const callbackUrl = searchParams.get("callbackUrl") || "/admin-dashboard";
   const error = searchParams.get("error");
 
@@ -19,6 +20,25 @@ function SignInForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Redirect to dashboard if already signed in
+  useEffect(() => {
+    if (status === "authenticated" && session) {
+      router.push("/admin-dashboard");
+    }
+  }, [status, session, router]);
+
+  // Show loading while checking session
+  if (status === "loading" || (status === "authenticated" && session)) {
+    return (
+      <Card className="p-8 shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
+        <div className="flex flex-col items-center justify-center py-8">
+          <div className="w-8 h-8 border-4 border-[#c6af6c] border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-gray-600 text-sm">กำลังตรวจสอบ...</p>
+        </div>
+      </Card>
+    );
+  }
 
   const handleCredentialsSignIn = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -124,7 +124,7 @@ export default function Header({ transparent = false }: HeaderProps) {
       </nav>
 
       {/* Mobile Menu */}
-      <div className={`fixed inset-0 z-40 md:hidden transition-all duration-500 ${
+      <div className={`fixed inset-0 z-60 md:hidden transition-all duration-500 ${
         mobileMenuOpen ? "visible" : "invisible"
       }`}>
         {/* Backdrop */}

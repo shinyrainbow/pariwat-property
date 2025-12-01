@@ -667,18 +667,16 @@ function SearchContent() {
                             </div>
                           ) : (
                             <>
-                              {property.rentalRateNum && property.rentalRateNum > 0 && (
+                              {property.rentalRateNum != null && property.rentalRateNum > 0 && (
                                 <div className="bg-emerald-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
                                   เช่า
                                 </div>
                               )}
-                              {property.sellPriceNum &&
-                                property.sellPriceNum > 0 &&
-                                !property.rentalRateNum && (
-                                  <div className="bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
-                                    ขาย
-                                  </div>
-                                )}
+                              {property.sellPriceNum != null && property.sellPriceNum > 0 && (
+                                <div className="bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                                  ขาย
+                                </div>
+                              )}
                             </>
                           )}
                         </div>
@@ -729,21 +727,22 @@ function SearchContent() {
 
                         {/* Price */}
                         <div>
-                          {property.rentalRateNum &&
+                          {property.rentalRateNum != null &&
                             property.rentalRateNum > 0 && (
                               <div className="text-lg font-bold text-[#c6af6c]">
-                                ฿ {formatPrice(property.rentalRateNum)}
+                                ฿{formatPrice(property.rentalRateNum)}
                                 <span className="text-xs font-normal text-gray-600">
-                                  {" "}
-                                  / เดือน
+                                  /เดือน
                                 </span>
                               </div>
                             )}
-                          {property.sellPriceNum &&
-                            property.sellPriceNum > 0 &&
-                            !property.rentalRateNum && (
-                              <div className="text-lg font-bold text-[#c6af6c]">
-                                ฿ {formatPrice(property.sellPriceNum)}
+                          {property.sellPriceNum != null &&
+                            property.sellPriceNum > 0 && (
+                              <div className={`font-bold text-[#c6af6c] ${property.rentalRateNum != null && property.rentalRateNum > 0 ? "text-sm" : "text-lg"}`}>
+                                {property.rentalRateNum != null && property.rentalRateNum > 0 && (
+                                  <span className="text-xs font-normal text-gray-500 mr-1">ขาย</span>
+                                )}
+                                ฿{formatPrice(property.sellPriceNum)}
                               </div>
                             )}
                         </div>

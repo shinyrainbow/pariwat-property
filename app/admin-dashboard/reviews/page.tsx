@@ -14,6 +14,8 @@ import {
   Eye,
   Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Review {
   id: string;
@@ -78,6 +80,7 @@ export default function AdminReviewsPage() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const { confirm } = useConfirmDialog();
 
   const fetchReviews = async () => {
     try {
@@ -119,7 +122,14 @@ export default function AdminReviewsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรีวิวนี้?")) return;
+    const confirmed = await confirm({
+      title: "ยืนยันการลบ",
+      message: "คุณแน่ใจหรือไม่ว่าต้องการลบรีวิวนี้?",
+      confirmText: "ลบ",
+      cancelText: "ยกเลิก",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setUpdating(id);
     try {
@@ -128,10 +138,12 @@ export default function AdminReviewsPage() {
       });
 
       if (res.ok) {
+        toast.success("ลบรีวิวเรียบร้อยแล้ว");
         fetchReviews();
       }
     } catch (error) {
       console.error("Failed to delete review:", error);
+      toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
     } finally {
       setUpdating(null);
     }

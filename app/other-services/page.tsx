@@ -24,6 +24,15 @@ interface OtherService {
   order: number;
 }
 
+// Ensure URL has protocol prefix
+const ensureAbsoluteUrl = (url: string | null): string | null => {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  return `https://${url}`;
+};
+
 export default function OtherServicesPage() {
   const [services, setServices] = useState<OtherService[]>([]);
   const [loading, setLoading] = useState(true);
@@ -157,7 +166,7 @@ export default function OtherServicesPage() {
                     {/* Link Button */}
                     {service.linkUrl ? (
                       <a
-                        href={service.linkUrl}
+                        href={ensureAbsoluteUrl(service.linkUrl) || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 text-[#c6af6c] hover:text-[#b39d5b] font-medium transition-colors group/link"

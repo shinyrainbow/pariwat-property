@@ -17,6 +17,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
+import { toast } from "sonner";
 
 // Hero background images for slideshow
 const heroImages = [
@@ -94,12 +95,24 @@ interface Project {
   image: string;
 }
 
+interface Review {
+  id: string;
+  name: string;
+  rating: number;
+  comment: string;
+  transactionType: string;
+  location: string;
+  createdAt: string;
+}
+
 export default function PublicPropertiesPage() {
   const router = useRouter();
   const [properties, setProperties] = useState<Property[]>([]);
   const [popularProperties, setPopularProperties] = useState<Property[]>([]);
   const [closedDeals, setClosedDeals] = useState<Property[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [propertiesWithPromotions, setPropertiesWithPromotions] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -108,6 +121,12 @@ export default function PublicPropertiesPage() {
   const observerRefs = useRef<{ [key: string]: HTMLElement | null }>({});
   const popularSliderRef = useRef<HTMLDivElement>(null);
   const closedDealsSliderRef = useRef<HTMLDivElement>(null);
+
+  // Slider scroll position states
+  const [popularCanScrollLeft, setPopularCanScrollLeft] = useState(false);
+  const [popularCanScrollRight, setPopularCanScrollRight] = useState(true);
+  const [closedCanScrollLeft, setClosedCanScrollLeft] = useState(false);
+  const [closedCanScrollRight, setClosedCanScrollRight] = useState(true);
 
   // Hero background slideshow
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -199,25 +218,31 @@ export default function PublicPropertiesPage() {
     fetchProperties();
   }, [page, propertyType, listingType, bedrooms, minPrice, maxPrice]);
 
-  // Fetch popular properties, closed deals, and projects on mount
+  // Fetch popular properties, closed deals, projects, and reviews on mount
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const [popularRes, closedRes, projectsRes] = await Promise.all([
+        const [popularRes, closedRes, projectsRes, reviewsRes, promotionsRes] = await Promise.all([
           fetch("/api/public/enhanced-properties/popular"),
           fetch("/api/public/enhanced-properties/closed-deals"),
           fetch("/api/public/projects"),
+          fetch("/api/public/reviews"),
+          fetch("/api/public/enhanced-properties/with-promotions?limit=6"),
         ]);
 
-        const [popularData, closedData, projectsData] = await Promise.all([
+        const [popularData, closedData, projectsData, reviewsData, promotionsData] = await Promise.all([
           popularRes.json(),
           closedRes.json(),
           projectsRes.json(),
+          reviewsRes.json(),
+          promotionsRes.json(),
         ]);
 
         if (popularData.success) setPopularProperties(popularData.data);
         if (closedData.success) setClosedDeals(closedData.data);
         if (projectsData.success) setProjects(projectsData.data);
+        if (reviewsData.success) setReviews(reviewsData.data.slice(0, 3));
+        if (promotionsData.success) setPropertiesWithPromotions(promotionsData.data.slice(0, 3));
       } catch (error) {
         console.error("Failed to fetch home data:", error);
       }
@@ -226,14 +251,39 @@ export default function PublicPropertiesPage() {
     fetchHomeData();
   }, []);
 
+  // Check slider scroll position
+  const checkSliderScroll = (ref: React.RefObject<HTMLDivElement | null>, type: "popular" | "closed") => {
+    if (ref.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = ref.current;
+      const canLeft = scrollLeft > 0;
+      const canRight = scrollLeft < scrollWidth - clientWidth - 10;
+
+      if (type === "popular") {
+        setPopularCanScrollLeft(canLeft);
+        setPopularCanScrollRight(canRight);
+      } else {
+        setClosedCanScrollLeft(canLeft);
+        setClosedCanScrollRight(canRight);
+      }
+    }
+  };
+
+  // Initialize slider scroll states
+  useEffect(() => {
+    checkSliderScroll(popularSliderRef, "popular");
+    checkSliderScroll(closedDealsSliderRef, "closed");
+  }, [popularProperties, closedDeals]);
+
   // Slider scroll functions
-  const scrollSlider = (ref: React.RefObject<HTMLDivElement | null>, direction: "left" | "right") => {
+  const scrollSlider = (ref: React.RefObject<HTMLDivElement | null>, direction: "left" | "right", type: "popular" | "closed") => {
     if (ref.current) {
       const scrollAmount = 320;
       ref.current.scrollBy({
         left: direction === "left" ? -scrollAmount : scrollAmount,
         behavior: "smooth",
       });
+      // Check scroll position after animation
+      setTimeout(() => checkSliderScroll(ref, type), 350);
     }
   };
 
@@ -495,14 +545,24 @@ export default function PublicPropertiesPage() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                className="w-11 h-11 flex items-center justify-center rounded-full border-2 border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white transition-all duration-300"
-                onClick={() => scrollSlider(popularSliderRef, "left")}
+                className={`w-11 h-11 flex items-center justify-center rounded-full border-2 transition-all duration-300 ${
+                  popularCanScrollLeft
+                    ? "border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white"
+                    : "border-gray-300 text-gray-300 cursor-not-allowed"
+                }`}
+                onClick={() => scrollSlider(popularSliderRef, "left", "popular")}
+                disabled={!popularCanScrollLeft}
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
               <button
-                className="w-11 h-11 flex items-center justify-center rounded-full border-2 border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white transition-all duration-300"
-                onClick={() => scrollSlider(popularSliderRef, "right")}
+                className={`w-11 h-11 flex items-center justify-center rounded-full border-2 transition-all duration-300 ${
+                  popularCanScrollRight
+                    ? "border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white"
+                    : "border-gray-300 text-gray-300 cursor-not-allowed"
+                }`}
+                onClick={() => scrollSlider(popularSliderRef, "right", "popular")}
+                disabled={!popularCanScrollRight}
               >
                 <ChevronRight className="w-6 h-6" />
               </button>
@@ -514,6 +574,7 @@ export default function PublicPropertiesPage() {
             ref={popularSliderRef}
             className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            onScroll={() => checkSliderScroll(popularSliderRef, "popular")}
           >
             {popularProperties.map((property, index) => (
               <Link
@@ -620,14 +681,24 @@ export default function PublicPropertiesPage() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                className="w-11 h-11 flex items-center justify-center rounded-full border-2 border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white transition-all duration-300"
-                onClick={() => scrollSlider(closedDealsSliderRef, "left")}
+                className={`w-11 h-11 flex items-center justify-center rounded-full border-2 transition-all duration-300 ${
+                  closedCanScrollLeft
+                    ? "border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white"
+                    : "border-gray-300 text-gray-300 cursor-not-allowed"
+                }`}
+                onClick={() => scrollSlider(closedDealsSliderRef, "left", "closed")}
+                disabled={!closedCanScrollLeft}
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
               <button
-                className="w-11 h-11 flex items-center justify-center rounded-full border-2 border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white transition-all duration-300"
-                onClick={() => scrollSlider(closedDealsSliderRef, "right")}
+                className={`w-11 h-11 flex items-center justify-center rounded-full border-2 transition-all duration-300 ${
+                  closedCanScrollRight
+                    ? "border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white"
+                    : "border-gray-300 text-gray-300 cursor-not-allowed"
+                }`}
+                onClick={() => scrollSlider(closedDealsSliderRef, "right", "closed")}
+                disabled={!closedCanScrollRight}
               >
                 <ChevronRight className="w-6 h-6" />
               </button>
@@ -639,6 +710,7 @@ export default function PublicPropertiesPage() {
             ref={closedDealsSliderRef}
             className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            onScroll={() => checkSliderScroll(closedDealsSliderRef, "closed")}
           >
             {closedDeals.map((property, index) => (
               <div
@@ -814,98 +886,72 @@ export default function PublicPropertiesPage() {
 
           {/* Promotions Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Promotion Card 1 */}
-            <Card
-              className={`overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 ${
-                isVisible["promotions"]
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-10"
-              }`}
-              style={{ transitionDelay: "100ms" }}
-            >
-              <div className="relative h-48 bg-gradient-to-br from-[#c6af6c] to-[#b39d5b]">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-5xl font-bold mb-2">10%</div>
-                    <div className="text-lg">ส่วนลดค่านายหน้า</div>
-                  </div>
-                </div>
-                <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                  HOT
-                </div>
+            {propertiesWithPromotions.length > 0 ? (
+              propertiesWithPromotions.map((property, index) => (
+                <Link key={property.id} href={`/property/${property.id}`}>
+                  <Card
+                    className={`overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 cursor-pointer ${
+                      isVisible["promotions"]
+                        ? "opacity-100 translate-y-0"
+                        : "opacity-0 translate-y-10"
+                    }`}
+                    style={{ transitionDelay: `${(index + 1) * 100}ms` }}
+                  >
+                    <div className="relative h-48 overflow-hidden">
+                      {property.imageUrls && property.imageUrls.length > 0 ? (
+                        <Image
+                          src={property.imageUrls[0]}
+                          alt={property.propertyTitleTh || property.propertyTitleEn || "Property"}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-[#c6af6c] to-[#b39d5b]" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                      {property.extension?.promotions && property.extension.promotions[0] && (
+                        <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold text-white ${
+                          property.extension.promotions[0].type === "hot" ? "bg-red-500" :
+                          property.extension.promotions[0].type === "new" ? "bg-green-500" :
+                          property.extension.promotions[0].type === "discount" ? "bg-blue-500" :
+                          "bg-purple-500"
+                        }`}>
+                          {property.extension.promotions[0].label}
+                        </div>
+                      )}
+                      <div className="absolute bottom-4 left-4 right-4 text-white">
+                        <p className="text-2xl font-bold">
+                          {property.rentalRateNum
+                            ? `฿${formatPrice(property.rentalRateNum)}/เดือน`
+                            : `฿${formatPrice(property.sellPriceNum)}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1">
+                        {property.propertyTitleTh || property.propertyTitleEn || property.project?.projectNameTh || "ทรัพย์สินโปรโมชัน"}
+                      </h3>
+                      <p className="text-gray-600 text-sm mb-2 flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        {property.project?.projectNameTh || property.project?.projectNameEn || ""}
+                      </p>
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Bed className="w-3 h-3" /> {property.bedRoomNum}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Bath className="w-3 h-3" /> {property.bathRoomNum}
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-10 text-gray-500">
+                ยังไม่มีโปรโมชันในขณะนี้
               </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  โปรโมชันสำหรับลูกค้าใหม่
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  รับส่วนลดค่านายหน้า 10% เมื่อทำสัญญาเช่าหรือซื้อภายในเดือนนี้
-                </p>
-                <p className="text-xs text-gray-400">หมดเขต: 31 ธันวาคม 2025</p>
-              </div>
-            </Card>
-
-            {/* Promotion Card 2 */}
-            <Card
-              className={`overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 ${
-                isVisible["promotions"]
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-10"
-              }`}
-              style={{ transitionDelay: "200ms" }}
-            >
-              <div className="relative h-48 bg-gradient-to-br from-blue-500 to-blue-600">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-5xl font-bold mb-2">ฟรี</div>
-                    <div className="text-lg">ค่าโอนกรรมสิทธิ์</div>
-                  </div>
-                </div>
-                <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                  NEW
-                </div>
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  โปรโมชันซื้อคอนโดใหม่
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  ซื้อคอนโดโครงการใหม่ รับฟรีค่าโอนกรรมสิทธิ์และค่าจดจำนอง
-                </p>
-                <p className="text-xs text-gray-400">เฉพาะโครงการที่ร่วมรายการ</p>
-              </div>
-            </Card>
-
-            {/* Promotion Card 3 */}
-            <Card
-              className={`overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 ${
-                isVisible["promotions"]
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-10"
-              }`}
-              style={{ transitionDelay: "300ms" }}
-            >
-              <div className="relative h-48 bg-gradient-to-br from-purple-500 to-purple-600">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-5xl font-bold mb-2">1 เดือน</div>
-                    <div className="text-lg">เช่าฟรี</div>
-                  </div>
-                </div>
-                <div className="absolute top-4 right-4 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                  LIMITED
-                </div>
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  โปรโมชันเช่าระยะยาว
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  เช่าสัญญา 1 ปีขึ้นไป รับฟรีค่าเช่า 1 เดือน
-                </p>
-                <p className="text-xs text-gray-400">เฉพาะห้องที่ร่วมรายการ</p>
-              </div>
-            </Card>
+            )}
           </div>
 
           {/* View All Button */}
@@ -1101,18 +1147,19 @@ export default function PublicPropertiesPage() {
 
                       {/* Price */}
                       <div>
-                        {property.rentalRateNum && property.rentalRateNum > 0 && (
+                        {property.rentalRateNum != null && property.rentalRateNum > 0 && (
                           <div className="text-lg font-bold text-[#c6af6c]">
+                            <span className="text-sm font-medium text-gray-600">เช่า: </span>
                             ฿ {formatPrice(property.rentalRateNum)}
                             <span className="text-xs font-normal text-gray-600">
                               / เดือน
                             </span>
                           </div>
                         )}
-                        {property.sellPriceNum &&
-                          property.sellPriceNum > 0 &&
-                          !property.rentalRateNum && (
+                        {property.sellPriceNum != null && property.sellPriceNum > 0 &&
+                          (property.rentalRateNum == null || property.rentalRateNum === 0) && (
                             <div className="text-lg font-bold text-[#c6af6c]">
+                              <span className="text-sm font-medium text-gray-600">ขาย: </span>
                               ฿ {formatPrice(property.sellPriceNum)}
                             </div>
                           )}
@@ -1228,17 +1275,25 @@ export default function PublicPropertiesPage() {
               <Button
                 size="default"
                 className="bg-white text-[#c6af6c] hover:bg-gray-100 font-bold px-6 py-4 rounded-full transform hover:scale-110 transition-all duration-300 shadow-2xl"
+                onClick={() => {
+                  navigator.clipboard.writeText("0655614169");
+                  toast.success("คัดลอกเบอร์โทรศัพท์แล้ว");
+                }}
               >
                 <Phone className="w-4 h-4 mr-2" />
-                โทรติดต่อ
+                065-561-4169
               </Button>
               <Button
                 size="default"
                 variant="outline"
-                className="bg-white/10 backdrop-blur-md border-2 border-white text-white hover:bg-white hover:text-[#c6af6c] font-bold px-6 py-4 rounded-full transform hover:scale-110 transition-all duration-300"
+                className="bg-white/10 backdrop-blur-md border-2 border-white text-white hover:bg-white hover:text-[#c6af6c] font-bold px-6 py-4 rounded-full transform hover:scale-105 transition-all duration-300"
+                onClick={() => {
+                  navigator.clipboard.writeText("bkgroup.ch.official@gmail.com");
+                  toast.success("คัดลอกอีเมลแล้ว");
+                }}
               >
                 <Mail className="w-4 h-4 mr-2" />
-                ส่งอีเมล
+                bkgroup.ch.official@gmail.com
               </Button>
             </div>
           </div>
@@ -1271,101 +1326,57 @@ export default function PublicPropertiesPage() {
 
           {/* Reviews Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Review Card 1 */}
-            <Card
-              className={`p-6 border-0 shadow-lg hover:shadow-xl transition-all duration-500 ${
-                isVisible["reviews"]
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-10"
-              }`}
-              style={{ transitionDelay: "100ms" }}
-            >
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-5 h-5 fill-yellow-400 text-yellow-400"
-                  />
-                ))}
-              </div>
-              <Quote className="w-8 h-8 text-[#c6af6c] mb-3" />
-              <p className="text-gray-600 mb-4 leading-relaxed">
-                &quot;บริการดีมาก ตอบเร็ว ช่วยหาห้องที่ตรงใจได้เลย ขอบคุณทีมงาน Pariwat Property มากครับ&quot;
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-[#c6af6c] rounded-full flex items-center justify-center text-white font-bold text-lg">
-                  ส
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">คุณสมชาย</p>
-                  <p className="text-sm text-gray-500">เช่าคอนโด สุขุมวิท</p>
-                </div>
-              </div>
-            </Card>
+            {reviews.length > 0 ? (
+              reviews.map((review, index) => {
+                const avatarColors = ["bg-[#c6af6c]", "bg-blue-500", "bg-purple-500", "bg-green-500", "bg-orange-500"];
+                const avatarColor = avatarColors[index % avatarColors.length];
+                const firstChar = review.name.charAt(0).toUpperCase();
 
-            {/* Review Card 2 */}
-            <Card
-              className={`p-6 border-0 shadow-lg hover:shadow-xl transition-all duration-500 ${
-                isVisible["reviews"]
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-10"
-              }`}
-              style={{ transitionDelay: "200ms" }}
-            >
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-5 h-5 fill-yellow-400 text-yellow-400"
-                  />
-                ))}
+                return (
+                  <Card
+                    key={review.id}
+                    className={`p-6 border-0 shadow-lg hover:shadow-xl transition-all duration-500 ${
+                      isVisible["reviews"]
+                        ? "opacity-100 translate-y-0"
+                        : "opacity-0 translate-y-10"
+                    }`}
+                    style={{ transitionDelay: `${(index + 1) * 100}ms` }}
+                  >
+                    <div className="flex items-center gap-1 mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-5 h-5 ${
+                            i < review.rating
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "fill-gray-200 text-gray-200"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <Quote className="w-8 h-8 text-[#c6af6c] mb-3" />
+                    <p className="text-gray-600 mb-4 leading-relaxed">
+                      &quot;{review.comment}&quot;
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-12 h-12 ${avatarColor} rounded-full flex items-center justify-center text-white font-bold text-lg`}>
+                        {firstChar}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">{review.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {review.transactionType === "rent" ? "เช่า" : "ซื้อ"} {review.location}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })
+            ) : (
+              <div className="col-span-full text-center py-10 text-gray-500">
+                ยังไม่มีรีวิวในขณะนี้
               </div>
-              <Quote className="w-8 h-8 text-[#c6af6c] mb-3" />
-              <p className="text-gray-600 mb-4 leading-relaxed">
-                &quot;ประทับใจมากค่ะ ให้ข้อมูลครบถ้วน พาดูหลายที่จนได้ห้องที่ถูกใจ ราคาดีด้วย&quot;
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                  น
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">คุณนภา</p>
-                  <p className="text-sm text-gray-500">ซื้อคอนโด พระราม 9</p>
-                </div>
-              </div>
-            </Card>
-
-            {/* Review Card 3 */}
-            <Card
-              className={`p-6 border-0 shadow-lg hover:shadow-xl transition-all duration-500 ${
-                isVisible["reviews"]
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-10"
-              }`}
-              style={{ transitionDelay: "300ms" }}
-            >
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-5 h-5 fill-yellow-400 text-yellow-400"
-                  />
-                ))}
-              </div>
-              <Quote className="w-8 h-8 text-[#c6af6c] mb-3" />
-              <p className="text-gray-600 mb-4 leading-relaxed">
-                &quot;เป็นครั้งแรกที่หาบ้าน ทีมงานให้คำแนะนำดีมาก ช่วยเรื่องเอกสารทุกอย่าง สะดวกมากครับ&quot;
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                  ว
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">คุณวิชัย</p>
-                  <p className="text-sm text-gray-500">ซื้อบ้านเดี่ยว บางนา</p>
-                </div>
-              </div>
-            </Card>
+            )}
           </div>
 
           {/* View All Button */}

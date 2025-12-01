@@ -6,6 +6,7 @@ import {
   addPromotion,
   updatePromotion,
   deletePromotion,
+  getExtensionByPropertyId,
 } from "@/lib/property-extensions";
 
 interface RouteParams {
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const promotion = await addPromotion(propertyId, {
+    await addPromotion(propertyId, {
       label: body.label,
       type: body.type,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
@@ -64,9 +65,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       isActive: body.isActive ?? true,
     });
 
+    // Return the full extension with all promotions
+    const extension = await getExtensionByPropertyId(propertyId);
+
     return NextResponse.json({
       success: true,
-      data: promotion,
+      data: extension,
     });
   } catch (error) {
     console.error("Error adding promotion:", error);

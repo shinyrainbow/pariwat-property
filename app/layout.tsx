@@ -4,6 +4,8 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 import AuthSessionProvider from "@/components/providers/session-provider";
 import { OrganizationJsonLd } from "@/components/seo/json-ld";
+import { Toaster } from "@/components/ui/toaster";
+import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog";
 
 const kanit = Kanit({
   weight: ["300", "400", "500", "600", "700"],
@@ -118,7 +120,12 @@ export default function RootLayout({
       </head>
       <body className={`${kanit.variable} font-sans antialiased`}>
         <OrganizationJsonLd />
-        <AuthSessionProvider>{children}</AuthSessionProvider>
+        <AuthSessionProvider>
+          <ConfirmDialogProvider>
+            {children}
+          </ConfirmDialogProvider>
+        </AuthSessionProvider>
+        <Toaster />
       </body>
       {process.env.NEXT_PUBLIC_GA_ID && (
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />

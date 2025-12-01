@@ -1029,22 +1029,17 @@ export default function PropertyDetailPage() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                         {/* Badges */}
-                        <div className="absolute top-3 left-3">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${
-                              rec.listingType === "rent"
-                                ? "bg-emerald-500"
-                                : rec.listingType === "sale"
-                                ? "bg-amber-500"
-                                : "bg-purple-500"
-                            }`}
-                          >
-                            {rec.listingType === "rent"
-                              ? "เช่า"
-                              : rec.listingType === "sale"
-                              ? "ขาย"
-                              : "ขาย/เช่า"}
-                          </span>
+                        <div className="absolute top-3 left-3 flex gap-1">
+                          {rec.rentalRateNum != null && rec.rentalRateNum > 0 && (
+                            <span className="px-3 py-1 rounded-full text-xs font-semibold text-white bg-emerald-500">
+                              เช่า
+                            </span>
+                          )}
+                          {rec.sellPriceNum != null && rec.sellPriceNum > 0 && (
+                            <span className="px-3 py-1 rounded-full text-xs font-semibold text-white bg-amber-500">
+                              ขาย
+                            </span>
+                          )}
                         </div>
 
                         {/* Property Type */}
@@ -1097,18 +1092,22 @@ export default function PropertyDetailPage() {
                         </div>
 
                         <div className="pt-3 border-t border-gray-100">
-                          {rec.rentalRateNum && rec.rentalRateNum > 0 ? (
+                          {rec.rentalRateNum != null && rec.rentalRateNum > 0 && (
                             <div className="text-lg font-bold text-[#c6af6c]">
-                              ฿ {formatPrice(rec.rentalRateNum)}
+                              ฿{formatPrice(rec.rentalRateNum)}
                               <span className="text-xs font-normal text-gray-500">
                                 /เดือน
                               </span>
                             </div>
-                          ) : rec.sellPriceNum && rec.sellPriceNum > 0 ? (
-                            <div className="text-lg font-bold text-[#c6af6c]">
-                              ฿ {formatPrice(rec.sellPriceNum)}
+                          )}
+                          {rec.sellPriceNum != null && rec.sellPriceNum > 0 && (
+                            <div className={`text-lg font-bold text-[#c6af6c] ${rec.rentalRateNum != null && rec.rentalRateNum > 0 ? "text-sm mt-1" : ""}`}>
+                              {rec.rentalRateNum != null && rec.rentalRateNum > 0 && (
+                                <span className="text-xs font-normal text-gray-500 mr-1">ขาย</span>
+                              )}
+                              ฿{formatPrice(rec.sellPriceNum)}
                             </div>
-                          ) : null}
+                          )}
                         </div>
                       </div>
                     </Card>
