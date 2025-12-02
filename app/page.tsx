@@ -638,9 +638,9 @@ export default function PublicPropertiesPage() {
                     <div className="absolute bottom-3 left-3 right-3">
                       <p className="text-white font-bold text-lg line-clamp-1 drop-shadow-lg">
                         {property.rentalRateNum && property.rentalRateNum > 0
-                          ? `เช่า: ฿${formatPrice(property.rentalRateNum)}/เดือน`
+                          ? `฿${formatPrice(property.rentalRateNum)}/เดือน`
                           : property.sellPriceNum && property.sellPriceNum > 0
-                          ? `ขาย: ฿${formatPrice(property.sellPriceNum)}`
+                          ? `฿${formatPrice(property.sellPriceNum)}`
                           : "ติดต่อสอบถาม"}
                       </p>
                     </div>
@@ -799,11 +799,11 @@ export default function PublicPropertiesPage() {
                     <div className="absolute bottom-3 left-3 right-3">
                       <p className="text-white font-bold text-lg line-clamp-1 drop-shadow-lg">
                         {property.status === "sold" && property.sellPriceNum && property.sellPriceNum > 0
-                          ? `ขาย: ฿${formatPrice(property.sellPriceNum)}`
+                          ? `฿${formatPrice(property.sellPriceNum)}`
                           : property.rentalRateNum && property.rentalRateNum > 0
-                          ? `เช่า: ฿${formatPrice(property.rentalRateNum)}/เดือน`
+                          ? `฿${formatPrice(property.rentalRateNum)}/เดือน`
                           : property.sellPriceNum && property.sellPriceNum > 0
-                          ? `ขาย: ฿${formatPrice(property.sellPriceNum)}`
+                          ? `฿${formatPrice(property.sellPriceNum)}`
                           : "ติดต่อสอบถาม"}
                       </p>
                     </div>
