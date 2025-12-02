@@ -53,6 +53,7 @@ export interface NainaHubProperty {
   status: PropertyStatus;
   updatedAt: string;
   note: string | null;
+  amenities?: string[];
 }
 
 export interface NainaHubPagination {

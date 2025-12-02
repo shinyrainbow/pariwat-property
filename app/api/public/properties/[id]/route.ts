@@ -48,6 +48,7 @@ function transformProperty(prop: NainaHubProperty) {
           projectNameTh: prop.project.projectNameTh,
         }
       : null,
+    amenities: prop.amenities || [],
   };
 }
 

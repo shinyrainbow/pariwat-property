@@ -31,6 +31,67 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { PropertyJsonLd } from "@/components/seo/json-ld";
 
+// Amenity English to Thai label mapping
+const AMENITY_LABELS: Record<string, string> = {
+  "Pool": "สระว่ายน้ำ",
+  "Gym": "ฟิตเนส",
+  "Security 24/7": "รักษาความปลอดภัย 24 ชม.",
+  "Parking": "ที่จอดรถ",
+  "Garden": "สวน",
+  "Playground": "สนามเด็กเล่น",
+  "CCTV": "กล้องวงจรปิด",
+  "Keycard": "ระบบ Keycard",
+  "Lobby": "ล็อบบี้",
+  "Meeting Room": "ห้องประชุม",
+  "Library": "ห้องสมุด",
+  "Co-working Space": "พื้นที่ทำงานร่วม",
+  "Sauna": "ซาวน่า",
+  "Steam Room": "ห้องอบไอน้ำ",
+  "Jacuzzi": "จากุซซี่",
+  "Tennis Court": "สนามเทนนิส",
+  "Basketball Court": "สนามบาสเกตบอล",
+  "Golf Simulator": "กอล์ฟจำลอง",
+  "Yoga Room": "ห้องโยคะ",
+  "Sky Lounge": "สกายเลาจ์",
+  "Rooftop Garden": "สวนบนดาดฟ้า",
+  "BBQ Area": "พื้นที่บาร์บีคิว",
+  "Mini Mart": "มินิมาร์ท",
+  "Laundry": "ซักรีด",
+  "Shuttle Bus": "รถรับส่ง",
+  "Pet Friendly": "สัตว์เลี้ยงเข้าได้",
+  "Elevator": "ลิฟต์",
+  "Wheelchair Accessible": "ทางเข้าสำหรับรถเข็น",
+  "Wi-Fi": "Wi-Fi",
+  "Cable TV": "เคเบิลทีวี",
+  "Air Conditioning": "เครื่องปรับอากาศ",
+  "Heater": "เครื่องทำความร้อน",
+  "Washing Machine": "เครื่องซักผ้า",
+  "Microwave": "ไมโครเวฟ",
+  "Refrigerator": "ตู้เย็น",
+  "Kitchen": "ครัว",
+  "Balcony": "ระเบียง",
+  "Bathtub": "อ่างอาบน้ำ",
+  "Walk-in Closet": "ห้องแต่งตัว",
+  "Storage": "ห้องเก็บของ",
+  "Maid Room": "ห้องแม่บ้าน",
+  "Private Pool": "สระว่ายน้ำส่วนตัว",
+  "Private Garden": "สวนส่วนตัว",
+  "Home Theater": "โฮมเธียเตอร์",
+  "Wine Cellar": "ห้องเก็บไวน์",
+  "Smart Home": "ระบบบ้านอัจฉริยะ",
+  "Solar Panel": "แผงโซลาร์",
+  "EV Charger": "ที่ชาร์จรถไฟฟ้า",
+  "Fire Alarm": "สัญญาณเตือนไฟไหม้",
+  "Sprinkler": "ระบบดับเพลิง",
+  "Intercom": "อินเตอร์คอม",
+  "Video Door Phone": "วิดีโอดอร์โฟน",
+};
+
+// Get Thai label for amenity, fallback to English value
+const getAmenityLabel = (amenity: string): string => {
+  return AMENITY_LABELS[amenity] || amenity;
+};
+
 interface PropertyPromotion {
   id: string;
   label: string;
@@ -79,6 +140,7 @@ interface Property {
     projectNameTh: string;
   } | null;
   extension?: PropertyExtension | null;
+  amenities?: string[];
 }
 
 export default function PropertyDetailPage() {
@@ -784,30 +846,25 @@ export default function PropertyDetailPage() {
               )}
 
               {/* Amenities */}
-              <Card
-                className={`p-6 border-0 shadow-lg transition-all duration-700 delay-[400ms] ${
-                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-                }`}
-              >
-                <h2 className="text-lg font-bold text-gray-900 mb-4">
-                  สิ่งอำนวยความสะดวก
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {[
-                    "สระว่ายน้ำ",
-                    "ฟิตเนส",
-                    "ระบบรักษาความปลอดภัย 24 ชม.",
-                    "ที่จอดรถ",
-                    "ลิฟต์",
-                    "สวนส่วนกลาง",
-                  ].map((amenity, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-[#c6af6c]" />
-                      <span className="text-gray-600">{amenity}</span>
-                    </div>
-                  ))}
-                </div>
-              </Card>
+              {property.amenities && property.amenities.length > 0 && (
+                <Card
+                  className={`p-6 border-0 shadow-lg transition-all duration-700 delay-[400ms] ${
+                    isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+                  }`}
+                >
+                  <h2 className="text-lg font-bold text-gray-900 mb-4">
+                    สิ่งอำนวยความสะดวก
+                  </h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {property.amenities.map((amenity, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5 text-[#c6af6c]" />
+                        <span className="text-gray-600">{getAmenityLabel(amenity)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
 
               {/* Location Map */}
               {property.latitude && property.longitude && (
