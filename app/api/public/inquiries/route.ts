@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notifyNewPropertyInquiry } from "@/lib/line-notify";
 
 // POST /api/public/inquiries - Submit a property inquiry
 export async function POST(request: NextRequest) {
@@ -28,14 +29,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // TODO: Send notification email to admin
-    // You can integrate with email services like SendGrid, Resend, etc.
-    // Example:
-    // await sendEmail({
-    //   to: "bkgroup.ch.official@gmail.com",
-    //   subject: `New inquiry for ${propertyCode}`,
-    //   body: `Name: ${name}\nPhone: ${phone}\nMessage: ${message}`,
-    // });
+    // Send LINE notification (non-blocking)
+    notifyNewPropertyInquiry({
+      name,
+      phone,
+      propertyTitle: propertyTitle || undefined,
+      propertyCode: propertyCode || undefined,
+      message: message || undefined,
+    }).catch((err) => console.error("Failed to send LINE notification:", err));
 
     return NextResponse.json({
       success: true,

@@ -30,6 +30,7 @@ export default function Header({ transparent = false }: HeaderProps) {
     { href: "/search?listingType=rent", label: "เช่า" },
     { href: "/search?listingType=sale", label: "ขาย" },
     { href: "/promotions", label: "โปรโมชัน" },
+    { href: "/list-property", label: "ฝากขาย/เช่า" },
     { href: "/other-services", label: "บริการอื่นๆ" },
     { href: "/reviews", label: "รีวิว" },
     { href: "/contact", label: "ติดต่อ" },

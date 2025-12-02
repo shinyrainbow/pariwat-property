@@ -27,6 +27,9 @@ import {
   Tag,
   TrendingUp,
   CheckCircle,
+  Flame,
+  Percent,
+  Award,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -38,6 +41,8 @@ interface Promotion {
   label: string;
   type: string;
   isActive: boolean;
+  discountedPrice: number | null;
+  discountedRentalPrice: number | null;
 }
 
 interface PropertyTag {
@@ -123,13 +128,31 @@ function SearchContent() {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
+  // Format number with commas (e.g., 1000000 -> 1,000,000)
+  const formatPriceWithCommas = (value: string): string => {
+    const numbers = value.replace(/[^\d]/g, "");
+    if (!numbers) return "";
+    return Number(numbers).toLocaleString("en-US");
+  };
+
+  // Parse formatted price back to plain number string
+  const parsePriceValue = (value: string): string => {
+    return value.replace(/,/g, "");
+  };
+
+  // Handle price input change with auto-formatting
+  const handlePriceChange = (value: string, setter: (v: string) => void) => {
+    const formatted = formatPriceWithCommas(value);
+    setter(formatted);
+  };
+
   // Filters - initialized from URL params
   const [searchText, setSearchText] = useState<string>(searchParams.get("q") || "");
   const [propertyType, setPropertyType] = useState<string>(propertyTypeParam);
   const [listingType, setListingType] = useState<string>(listingTypeParam);
   const [bedrooms, setBedrooms] = useState<string>(bedroomsParam);
-  const [minPrice, setMinPrice] = useState<string>(minPriceParam);
-  const [maxPrice, setMaxPrice] = useState<string>(maxPriceParam);
+  const [minPrice, setMinPrice] = useState<string>(formatPriceWithCommas(minPriceParam));
+  const [maxPrice, setMaxPrice] = useState<string>(formatPriceWithCommas(maxPriceParam));
 
   // Sync state with URL params when they change (e.g., navigating from homepage)
   useEffect(() => {
@@ -138,8 +161,8 @@ function SearchContent() {
     setPropertyType(searchParams.get("propertyType") || "");
     setListingType(searchParams.get("listingType") || "");
     setBedrooms(searchParams.get("bedrooms") || "");
-    setMinPrice(searchParams.get("minPrice") || "");
-    setMaxPrice(searchParams.get("maxPrice") || "");
+    setMinPrice(formatPriceWithCommas(searchParams.get("minPrice") || ""));
+    setMaxPrice(formatPriceWithCommas(searchParams.get("maxPrice") || ""));
   }, [searchParams]);
 
   // Animation trigger
@@ -233,14 +256,14 @@ function SearchContent() {
 
     // Filter by price
     if (minPrice) {
-      const min = parseInt(minPrice);
+      const min = parseInt(parsePriceValue(minPrice));
       filtered = filtered.filter((p) => {
         const price = p.rentalRateNum || p.sellPriceNum || 0;
         return price >= min;
       });
     }
     if (maxPrice) {
-      const max = parseInt(maxPrice);
+      const max = parseInt(parsePriceValue(maxPrice));
       filtered = filtered.filter((p) => {
         const price = p.rentalRateNum || p.sellPriceNum || 0;
         return price <= max;
@@ -267,8 +290,8 @@ function SearchContent() {
     if (propertyType && propertyType !== "all") params.set("propertyType", propertyType);
     if (listingType && listingType !== "all") params.set("listingType", listingType);
     if (bedrooms && bedrooms !== "all") params.set("bedrooms", bedrooms);
-    if (minPrice) params.set("minPrice", minPrice);
-    if (maxPrice) params.set("maxPrice", maxPrice);
+    if (minPrice) params.set("minPrice", parsePriceValue(minPrice));
+    if (maxPrice) params.set("maxPrice", parsePriceValue(maxPrice));
 
     const queryString = params.toString();
     router.push(`/search${queryString ? `?${queryString}` : ""}`, {
@@ -279,6 +302,22 @@ function SearchContent() {
   const formatPrice = (price: number | null) => {
     if (!price) return null;
     return new Intl.NumberFormat("th-TH").format(price);
+  };
+
+  // Helper function to get promotion styling based on type
+  const getPromotionStyle = (type: string) => {
+    switch (type) {
+      case "hot":
+        return { color: "bg-red-500", Icon: Flame };
+      case "new":
+        return { color: "bg-green-500", Icon: Sparkles };
+      case "discount":
+        return { color: "bg-blue-500", Icon: Percent };
+      case "featured":
+        return { color: "bg-purple-500", Icon: Award };
+      default:
+        return { color: "bg-red-500", Icon: Flame };
+    }
   };
 
   const getSize = (property: Property) => {
@@ -496,17 +535,19 @@ function SearchContent() {
                   </label>
                   <div className="flex gap-2">
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       placeholder="ต่ำสุด"
                       value={minPrice}
-                      onChange={(e) => setMinPrice(e.target.value)}
+                      onChange={(e) => handlePriceChange(e.target.value, setMinPrice)}
                       className="border-gray-300"
                     />
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       placeholder="สูงสุด"
                       value={maxPrice}
-                      onChange={(e) => setMaxPrice(e.target.value)}
+                      onChange={(e) => handlePriceChange(e.target.value, setMaxPrice)}
                       className="border-gray-300"
                     />
                   </div>
@@ -658,12 +699,16 @@ function SearchContent() {
                             </div>
                           )}
                           {/* Promotion Badge */}
-                          {property.extension?.promotions && property.extension.promotions.length > 0 && (
-                            <div className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
-                              <Sparkles className="w-3 h-3" />
-                              {property.extension.promotions[0].label}
-                            </div>
-                          )}
+                          {property.extension?.promotions && property.extension.promotions.length > 0 && (() => {
+                            const promo = property.extension.promotions[0];
+                            const { color, Icon } = getPromotionStyle(promo.type);
+                            return (
+                              <div className={`${color} text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1`}>
+                                <Icon className="w-3 h-3" />
+                                {promo.label}
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         {/* Listing Type & Closed Deal Badge */}
@@ -755,23 +800,62 @@ function SearchContent() {
 
                         {/* Price */}
                         <div>
-                          {property.rentalRateNum != null &&
-                            property.rentalRateNum > 0 && (
-                              <div className="text-lg font-bold text-[#c6af6c]">
-                                <span className="text-xs font-normal text-gray-500 mr-1">เช่า:</span>
-                                ฿{formatPrice(property.rentalRateNum)}
-                                <span className="text-xs font-normal text-gray-600">
-                                  /เดือน
-                                </span>
-                              </div>
-                            )}
-                          {property.sellPriceNum != null &&
-                            property.sellPriceNum > 0 && (
-                              <div className={`font-bold text-[#c6af6c] ${property.rentalRateNum != null && property.rentalRateNum > 0 ? "text-sm mt-1" : "text-lg"}`}>
-                                <span className="text-xs font-normal text-gray-500 mr-1">ขาย:</span>
-                                ฿{formatPrice(property.sellPriceNum)}
-                              </div>
-                            )}
+                          {(() => {
+                            const discountPromo = property.extension?.promotions?.find(
+                              (p) => p.type === "discount" && (p.discountedPrice || p.discountedRentalPrice)
+                            );
+
+                            return (
+                              <>
+                                {property.rentalRateNum != null &&
+                                  property.rentalRateNum > 0 && (
+                                    discountPromo?.discountedRentalPrice ? (
+                                      <div>
+                                        <div className="text-sm text-gray-400 line-through">
+                                          <span className="text-xs font-normal mr-1">เช่า:</span>
+                                          ฿{formatPrice(property.rentalRateNum)}/เดือน
+                                        </div>
+                                        <div className="text-lg font-bold text-red-500">
+                                          <span className="text-xs font-normal text-gray-500 mr-1">เช่า:</span>
+                                          ฿{formatPrice(discountPromo.discountedRentalPrice)}
+                                          <span className="text-xs font-normal text-gray-600">
+                                            /เดือน
+                                          </span>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="text-lg font-bold text-[#c6af6c]">
+                                        <span className="text-xs font-normal text-gray-500 mr-1">เช่า:</span>
+                                        ฿{formatPrice(property.rentalRateNum)}
+                                        <span className="text-xs font-normal text-gray-600">
+                                          /เดือน
+                                        </span>
+                                      </div>
+                                    )
+                                  )}
+                                {property.sellPriceNum != null &&
+                                  property.sellPriceNum > 0 && (
+                                    discountPromo?.discountedPrice ? (
+                                      <div className={property.rentalRateNum != null && property.rentalRateNum > 0 ? "mt-1" : ""}>
+                                        <div className="text-sm text-gray-400 line-through">
+                                          <span className="text-xs font-normal mr-1">ขาย:</span>
+                                          ฿{formatPrice(property.sellPriceNum)}
+                                        </div>
+                                        <div className={`font-bold text-red-500 ${property.rentalRateNum != null && property.rentalRateNum > 0 ? "text-sm" : "text-lg"}`}>
+                                          <span className="text-xs font-normal text-gray-500 mr-1">ขาย:</span>
+                                          ฿{formatPrice(discountPromo.discountedPrice)}
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className={`font-bold text-[#c6af6c] ${property.rentalRateNum != null && property.rentalRateNum > 0 ? "text-sm mt-1" : "text-lg"}`}>
+                                        <span className="text-xs font-normal text-gray-500 mr-1">ขาย:</span>
+                                        ฿{formatPrice(property.sellPriceNum)}
+                                      </div>
+                                    )
+                                  )}
+                              </>
+                            );
+                          })()}
                         </div>
 
                         {/* Tags */}

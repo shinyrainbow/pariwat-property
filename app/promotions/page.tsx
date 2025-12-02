@@ -13,6 +13,8 @@ interface PropertyPromotion {
   label: string;
   type: string;
   isActive: boolean;
+  discountedPrice: number | null;
+  discountedRentalPrice: number | null;
 }
 
 interface PropertyExtension {
@@ -253,23 +255,57 @@ export default function PromotionsPage() {
 
                         {/* Price */}
                         <div className="border-t pt-3">
-                          {property.rentalRateNum > 0 && (
-                            <p className="text-sm">
-                              <span className="text-gray-500">เช่า:</span>{" "}
-                              <span className="font-bold text-[#c6af6c]">
-                                ฿{formatPrice(property.rentalRateNum)}
-                              </span>
-                              <span className="text-gray-400">/เดือน</span>
-                            </p>
-                          )}
-                          {property.sellPriceNum > 0 && (
-                            <p className="text-sm">
-                              <span className="text-gray-500">ขาย:</span>{" "}
-                              <span className="font-bold text-[#c6af6c]">
-                                ฿{formatPrice(property.sellPriceNum)}
-                              </span>
-                            </p>
-                          )}
+                          {(() => {
+                            const discountPromo = property.extension?.promotions.find(
+                              (p) => p.type === "discount" && (p.discountedPrice || p.discountedRentalPrice)
+                            );
+                            return (
+                              <>
+                                {property.rentalRateNum > 0 && (
+                                  <p className="text-sm">
+                                    <span className="text-gray-500">เช่า:</span>{" "}
+                                    {discountPromo?.discountedRentalPrice ? (
+                                      <>
+                                        <span className="font-medium text-gray-400 line-through mr-2">
+                                          ฿{formatPrice(property.rentalRateNum)}
+                                        </span>
+                                        <span className="font-bold text-red-500">
+                                          ฿{formatPrice(discountPromo.discountedRentalPrice)}
+                                        </span>
+                                        <span className="text-gray-400">/เดือน</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span className="font-bold text-[#c6af6c]">
+                                          ฿{formatPrice(property.rentalRateNum)}
+                                        </span>
+                                        <span className="text-gray-400">/เดือน</span>
+                                      </>
+                                    )}
+                                  </p>
+                                )}
+                                {property.sellPriceNum > 0 && (
+                                  <p className="text-sm">
+                                    <span className="text-gray-500">ขาย:</span>{" "}
+                                    {discountPromo?.discountedPrice ? (
+                                      <>
+                                        <span className="font-medium text-gray-400 line-through mr-2">
+                                          ฿{formatPrice(property.sellPriceNum)}
+                                        </span>
+                                        <span className="font-bold text-red-500">
+                                          ฿{formatPrice(discountPromo.discountedPrice)}
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <span className="font-bold text-[#c6af6c]">
+                                        ฿{formatPrice(property.sellPriceNum)}
+                                      </span>
+                                    )}
+                                  </p>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     </Card>

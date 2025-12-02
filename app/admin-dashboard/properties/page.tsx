@@ -112,6 +112,8 @@ export default function PropertiesListPage() {
   const [promotionForm, setPromotionForm] = useState({
     label: "",
     type: "hot" as "hot" | "new" | "discount" | "featured",
+    discountedPrice: "",
+    discountedRentalPrice: "",
     startDate: "",
     endDate: "",
     isActive: true,
@@ -255,6 +257,8 @@ export default function PropertiesListPage() {
         body: JSON.stringify({
           label: promotionForm.label,
           type: promotionForm.type,
+          discountedPrice: promotionForm.type === "discount" && promotionForm.discountedPrice ? promotionForm.discountedPrice : null,
+          discountedRentalPrice: promotionForm.type === "discount" && promotionForm.discountedRentalPrice ? promotionForm.discountedRentalPrice : null,
           startDate: promotionForm.startDate || null,
           endDate: promotionForm.endDate || null,
           isActive: promotionForm.isActive,
@@ -272,7 +276,7 @@ export default function PropertiesListPage() {
           )
         );
         setShowPromotionModal(null);
-        setPromotionForm({ label: "", type: "hot", startDate: "", endDate: "", isActive: true });
+        setPromotionForm({ label: "", type: "hot", discountedPrice: "", discountedRentalPrice: "", startDate: "", endDate: "", isActive: true });
       } else {
         const data = await res.json();
         toast.error(data.error || "เกิดข้อผิดพลาด");
@@ -733,7 +737,7 @@ export default function PropertiesListPage() {
               <button
                 onClick={() => {
                   setShowPromotionModal(null);
-                  setPromotionForm({ label: "", type: "hot", startDate: "", endDate: "", isActive: true });
+                  setPromotionForm({ label: "", type: "hot", discountedPrice: "", discountedRentalPrice: "", startDate: "", endDate: "", isActive: true });
                 }}
                 className="p-1 hover:bg-gray-100 rounded text-gray-900"
               >
@@ -786,6 +790,8 @@ export default function PropertiesListPage() {
                           setPromotionForm((prev) => ({
                             ...prev,
                             type: type.value as typeof promotionForm.type,
+                            discountedPrice: type.value !== "discount" ? "" : prev.discountedPrice,
+                            discountedRentalPrice: type.value !== "discount" ? "" : prev.discountedRentalPrice,
                           }))
                         }
                         className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors ${
@@ -805,6 +811,49 @@ export default function PropertiesListPage() {
                   })}
                 </div>
               </div>
+
+              {/* Discounted Prices - Only shown when type is discount */}
+              {promotionForm.type === "discount" && (
+                <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm font-medium text-blue-700">
+                    ระบุราคาหลังลด (ราคาเดิมจะแสดงเป็นราคาขีดฆ่า)
+                  </p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      ราคาขายหลังลด (บาท)
+                    </label>
+                    <Input
+                      type="number"
+                      value={promotionForm.discountedPrice}
+                      onChange={(e) =>
+                        setPromotionForm((prev) => ({
+                          ...prev,
+                          discountedPrice: e.target.value,
+                        }))
+                      }
+                      placeholder="เช่น 2500000"
+                      min={0}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      ราคาเช่าหลังลด (บาท/เดือน)
+                    </label>
+                    <Input
+                      type="number"
+                      value={promotionForm.discountedRentalPrice}
+                      onChange={(e) =>
+                        setPromotionForm((prev) => ({
+                          ...prev,
+                          discountedRentalPrice: e.target.value,
+                        }))
+                      }
+                      placeholder="เช่น 15000"
+                      min={0}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Date Range */}
               <div className="grid grid-cols-2 gap-4">
@@ -873,7 +922,7 @@ export default function PropertiesListPage() {
                   className="flex-1"
                   onClick={() => {
                     setShowPromotionModal(null);
-                    setPromotionForm({ label: "", type: "hot", startDate: "", endDate: "", isActive: true });
+                    setPromotionForm({ label: "", type: "hot", discountedPrice: "", discountedRentalPrice: "", startDate: "", endDate: "", isActive: true });
                   }}
                 >
                   ยกเลิก

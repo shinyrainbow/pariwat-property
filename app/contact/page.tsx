@@ -3,42 +3,18 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Building2, Phone, Mail, MapPin, Clock, Send, MessageSquare, Facebook, Instagram, Youtube } from "lucide-react";
+import { Building2, Phone, Mail, MapPin, Clock, MessageSquare, Facebook } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import Header from "@/components/layout/header";
 
 export default function ContactPage() {
   const [isVisible, setIsVisible] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    subject: "",
-    message: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timer);
   }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
-    setSubmitted(true);
-    setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const contactInfo = [
     {
@@ -160,139 +136,19 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Contact Form & Map */}
+      {/* Map & Line QR Section */}
       <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Contact Form */}
-            <div
-              className={`transition-all duration-700 ${
-                isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-10"
-              }`}
-              style={{ transitionDelay: "400ms" }}
-            >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">ส่งข้อความถึงเรา</h2>
-
-              {submitted ? (
-                <Card className="p-8 text-center border-0 shadow-lg bg-green-50">
-                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Send className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">ส่งข้อความสำเร็จ!</h3>
-                  <p className="text-gray-600 mb-4">
-                    ขอบคุณที่ติดต่อเรา เราจะตอบกลับโดยเร็วที่สุด
-                  </p>
-                  <Button
-                    onClick={() => setSubmitted(false)}
-                    className="bg-[#c6af6c] hover:bg-[#b39d5b] text-white"
-                  >
-                    ส่งข้อความอีกครั้ง
-                  </Button>
-                </Card>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        ชื่อ-นามสกุล *
-                      </label>
-                      <Input
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                        placeholder="กรอกชื่อ-นามสกุล"
-                        className="border-gray-300 focus:border-[#c6af6c] focus:ring-[#c6af6c]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        เบอร์โทรศัพท์ *
-                      </label>
-                      <Input
-                        name="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        required
-                        placeholder="08X-XXX-XXXX"
-                        className="border-gray-300 focus:border-[#c6af6c] focus:ring-[#c6af6c]"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      อีเมล *
-                    </label>
-                    <Input
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      placeholder="your@email.com"
-                      className="border-gray-300 focus:border-[#c6af6c] focus:ring-[#c6af6c]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      หัวข้อ
-                    </label>
-                    <Input
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      placeholder="เรื่องที่ต้องการติดต่อ"
-                      className="border-gray-300 focus:border-[#c6af6c] focus:ring-[#c6af6c]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ข้อความ *
-                    </label>
-                    <textarea
-                      name="message"
-                      value={formData.message}
-                      onChange={handleChange}
-                      required
-                      rows={5}
-                      placeholder="รายละเอียดที่ต้องการสอบถาม..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#c6af6c] focus:ring-1 focus:ring-[#c6af6c]"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-[#c6af6c] hover:bg-[#b39d5b] text-white py-6 text-lg"
-                  >
-                    {isSubmitting ? (
-                      <span className="flex items-center gap-2">
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        กำลังส่ง...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <Send className="w-5 h-5" />
-                        ส่งข้อความ
-                      </span>
-                    )}
-                  </Button>
-                </form>
-              )}
-            </div>
-
-            {/* Map & Social */}
-            <div
-              className={`transition-all duration-700 ${
-                isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10"
-              }`}
-              style={{ transitionDelay: "500ms" }}
-            >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">แผนที่และช่องทางติดตาม</h2>
-
-              {/* Map Placeholder */}
-              <Card className="overflow-hidden border-0 shadow-lg mb-6">
-                <div className="h-64 bg-gray-200 flex items-center justify-center">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Map */}
+              <Card
+                className={`overflow-hidden border-0 shadow-lg transition-all duration-700 ${
+                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+                }`}
+                style={{ transitionDelay: "400ms" }}
+              >
+                <div className="h-72 bg-gray-200 flex items-center justify-center">
                   <div className="text-center text-gray-500">
                     <MapPin className="w-12 h-12 mx-auto mb-2 text-[#c6af6c]" />
                     <p className="font-medium">Pariwat Property</p>
@@ -302,56 +158,65 @@ export default function ContactPage() {
               </Card>
 
               {/* Line QR Code Large */}
-              <Card className="p-6 border-0 shadow-lg mb-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">เพิ่มเพื่อนทาง Line</h3>
+              <Card
+                className={`p-6 border-0 shadow-lg transition-all duration-700 flex flex-col justify-center ${
+                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+                }`}
+                style={{ transitionDelay: "500ms" }}
+              >
+                <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">เพิ่มเพื่อนทาง Line</h3>
                 <div className="flex justify-center">
                   <Image
                     src="/pariwat-qr.jpg"
                     alt="Line QR Code"
-                    width={200}
-                    height={200}
+                    width={180}
+                    height={180}
                     className="rounded-lg shadow-md"
                   />
                 </div>
                 <p className="text-center text-gray-500 text-sm mt-4">
                   สแกน QR Code เพื่อติดต่อเราผ่าน Line
                 </p>
-              </Card>
-
-              {/* Social Media */}
-              <Card className="p-6 border-0 shadow-lg">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">ติดตามเราได้ที่</h3>
-                <div className="flex gap-4">
-                  <a
-                    href="#"
-                    className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors"
-                  >
-                    <Facebook className="w-6 h-6 text-white" />
-                  </a>
-                  <a
-                    href="#"
-                    className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-500 rounded-full flex items-center justify-center hover:from-purple-700 hover:to-pink-600 transition-colors"
-                  >
-                    <Instagram className="w-6 h-6 text-white" />
-                  </a>
-                  <a
-                    href="#"
-                    className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors"
-                  >
-                    <Youtube className="w-6 h-6 text-white" />
-                  </a>
-                  <a
-                    href="#"
-                    className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors"
-                  >
-                    <Phone className="w-6 h-6 text-white" />
-                  </a>
-                </div>
-                <p className="text-sm text-gray-500 mt-4">
-                  ติดตามข่าวสารและโปรโมชันล่าสุดได้ทุกช่องทาง
-                </p>
+                <a
+                  href="https://lin.ee/5nLXDZY"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 bg-[#00B900] hover:bg-[#00a000] text-white py-3 px-6 rounded-xl font-semibold text-center transition-colors inline-flex items-center justify-center gap-2"
+                >
+                  <MessageSquare className="w-5 h-5" />
+                  แอดไลน์
+                </a>
               </Card>
             </div>
+
+            {/* Facebook Section */}
+            <Card
+              className={`p-8 border-0 shadow-lg mt-8 transition-all duration-700 ${
+                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+              }`}
+              style={{ transitionDelay: "600ms" }}
+            >
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
+                    <Facebook className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">ติดตามเราบน Facebook</h3>
+                    <p className="text-gray-500 text-sm">รับข่าวสารและโปรโมชันล่าสุดได้ที่เพจของเรา</p>
+                  </div>
+                </div>
+                <a
+                  href="https://web.facebook.com/bkestate.boonket"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-8 rounded-xl font-semibold transition-colors inline-flex items-center gap-2"
+                >
+                  <Facebook className="w-5 h-5" />
+                  ไปที่ Facebook
+                </a>
+              </div>
+            </Card>
           </div>
         </div>
       </section>
@@ -367,12 +232,8 @@ export default function ContactPage() {
                 a: "สำนักงานเปิดให้บริการวันจันทร์ - ศุกร์ เวลา 09:00 - 18:00 น. และวันเสาร์ - อาทิตย์ เวลา 10:00 - 16:00 น.",
               },
               {
-                q: "ต้องเตรียมเอกสารอะไรบ้างสำหรับการเช่าหรือซื้อ?",
-                a: "สำหรับการเช่า: สำเนาบัตรประชาชน, สลิปเงินเดือน 3 เดือน / สำหรับการซื้อ: สำเนาบัตรประชาชน, ทะเบียนบ้าน, statement บัญชี 6 เดือน",
-              },
-              {
                 q: "สามารถนัดดูห้องได้อย่างไร?",
-                a: "ติดต่อเราผ่านทางโทรศัพท์ หรือกรอกแบบฟอร์มด้านบน ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง",
+                a: "ติดต่อเราผ่านทางโทรศัพท์หรือ Line Official ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง",
               },
               {
                 q: "มีค่าบริการนายหน้าหรือไม่?",
@@ -384,7 +245,7 @@ export default function ContactPage() {
                 className={`p-6 border-0 shadow-lg transition-all duration-500 ${
                   isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
                 }`}
-                style={{ transitionDelay: `${600 + index * 100}ms` }}
+                style={{ transitionDelay: `${700 + index * 100}ms` }}
               >
                 <h3 className="font-bold text-gray-900 mb-2">{faq.q}</h3>
                 <p className="text-gray-600 text-sm">{faq.a}</p>
@@ -437,7 +298,7 @@ export default function ContactPage() {
           <p className="mb-2 text-sm">
             Premium Real Estate Solutions | Chachoengsao, Thailand
           </p>
-        <p className="text-xs">© 2025 บริษัท บุญเกตุ แอสเซท กรุ๊ป จำกัด. All rights reserved.</p>
+          <p className="text-xs">© 2025 บริษัท บุญเกตุ แอสเซท กรุ๊ป จำกัด. All rights reserved.</p>
         </div>
       </footer>
     </div>

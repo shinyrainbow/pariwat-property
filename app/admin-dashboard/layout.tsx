@@ -18,6 +18,8 @@ import {
   Star,
   Wrench,
   MessageSquare,
+  Images,
+  FileText,
 } from "lucide-react";
 import Image from "next/image";
 import { signOut } from "next-auth/react";
@@ -48,6 +50,16 @@ const menuItems = [
     label: "ข้อความติดต่อ",
     href: "/admin-dashboard/inquiries",
     icon: MessageSquare,
+  },
+  {
+    label: "ฝากขาย/เช่า",
+    href: "/admin-dashboard/property-listings",
+    icon: FileText,
+  },
+  {
+    label: "ผลงานของเรา",
+    href: "/admin-dashboard/portfolio",
+    icon: Images,
   },
   {
     label: "บริการอื่นๆ",

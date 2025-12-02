@@ -199,6 +199,8 @@ export async function addPromotion(
   data: {
     label: string;
     type: string;
+    discountedPrice?: number | null;
+    discountedRentalPrice?: number | null;
     startDate?: Date;
     endDate?: Date | null;
     isActive?: boolean;
@@ -227,6 +229,8 @@ export async function updatePromotion(
   data: {
     label?: string;
     type?: string;
+    discountedPrice?: number | null;
+    discountedRentalPrice?: number | null;
     startDate?: Date;
     endDate?: Date | null;
     isActive?: boolean;

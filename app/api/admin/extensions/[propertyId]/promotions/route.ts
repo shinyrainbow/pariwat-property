@@ -60,6 +60,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     await addPromotion(propertyId, {
       label: body.label,
       type: body.type,
+      discountedPrice: body.type === "discount" && body.discountedPrice ? parseFloat(body.discountedPrice) : null,
+      discountedRentalPrice: body.type === "discount" && body.discountedRentalPrice ? parseFloat(body.discountedRentalPrice) : null,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       endDate: body.endDate ? new Date(body.endDate) : null,
       isActive: body.isActive ?? true,
@@ -102,6 +104,8 @@ export async function PUT(request: NextRequest) {
     const promotion = await updatePromotion(body.promotionId, {
       label: body.label,
       type: body.type,
+      discountedPrice: body.type === "discount" && body.discountedPrice ? parseFloat(body.discountedPrice) : null,
+      discountedRentalPrice: body.type === "discount" && body.discountedRentalPrice ? parseFloat(body.discountedRentalPrice) : null,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       endDate: body.endDate ? new Date(body.endDate) : null,
       isActive: body.isActive,

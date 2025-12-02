@@ -31,6 +31,19 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { PropertyJsonLd } from "@/components/seo/json-ld";
 
+interface PropertyPromotion {
+  id: string;
+  label: string;
+  type: string;
+  isActive: boolean;
+  discountedPrice: number | null;
+  discountedRentalPrice: number | null;
+}
+
+interface PropertyExtension {
+  promotions: PropertyPromotion[];
+}
+
 interface Property {
   id: string;
   agentPropertyCode: string;
@@ -65,6 +78,7 @@ interface Property {
     projectNameEn: string;
     projectNameTh: string;
   } | null;
+  extension?: PropertyExtension | null;
 }
 
 export default function PropertyDetailPage() {
@@ -76,7 +90,6 @@ export default function PropertyDetailPage() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [recommendedProperties, setRecommendedProperties] = useState<Property[]>([]);
   const [isVisible, setIsVisible] = useState(false);
-  const [showLineQR, setShowLineQR] = useState(false);
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [reviewStats, setReviewStats] = useState<{ count: number; avgRating: number }>({ count: 0, avgRating: 0 });
 
@@ -453,7 +466,7 @@ export default function PropertyDetailPage() {
       )}
 
       {/* Main Content */}
-      <div className="pt-20">
+      <div className="pt-40">
         {/* Premium Image Gallery - Bento Grid Layout */}
         <div className="container mx-auto px-4 py-6">
           {property.imageUrls && property.imageUrls.length > 0 ? (
@@ -595,17 +608,55 @@ export default function PropertyDetailPage() {
                       <div className="text-sm text-gray-500 mb-1">
                         ค่าเช่า / เดือน
                       </div>
-                      <div className="text-3xl font-bold text-[#c6af6c]">
-                        ฿ {formatPrice(property.rentalRateNum)}
-                      </div>
+                      {(() => {
+                        const discountPromo = property.extension?.promotions?.find(
+                          (p) => p.type === "discount" && p.discountedRentalPrice
+                        );
+                        if (discountPromo) {
+                          return (
+                            <div>
+                              <div className="text-xl text-gray-400 line-through">
+                                ฿ {formatPrice(property.rentalRateNum)}
+                              </div>
+                              <div className="text-3xl font-bold text-red-500">
+                                ฿ {formatPrice(discountPromo.discountedRentalPrice)}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className="text-3xl font-bold text-[#c6af6c]">
+                            ฿ {formatPrice(property.rentalRateNum)}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                   {property.sellPriceNum !== null && property.sellPriceNum > 0 && (
                     <div>
                       <div className="text-sm text-gray-500 mb-1">ราคาขาย</div>
-                      <div className="text-3xl font-bold text-[#c6af6c]">
-                        ฿ {formatPrice(property.sellPriceNum)}
-                      </div>
+                      {(() => {
+                        const discountPromo = property.extension?.promotions?.find(
+                          (p) => p.type === "discount" && p.discountedPrice
+                        );
+                        if (discountPromo) {
+                          return (
+                            <div>
+                              <div className="text-xl text-gray-400 line-through">
+                                ฿ {formatPrice(property.sellPriceNum)}
+                              </div>
+                              <div className="text-3xl font-bold text-red-500">
+                                ฿ {formatPrice(discountPromo.discountedPrice)}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className="text-3xl font-bold text-[#c6af6c]">
+                            ฿ {formatPrice(property.sellPriceNum)}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -851,23 +902,24 @@ export default function PropertyDetailPage() {
                   <div className="space-y-3">
                     {/* Phone Button */}
                     <Button
-                      className="w-full bg-[#c6af6c] hover:bg-[#b39d5b] text-white py-6 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+                      className="w-full bg-[#c6af6c] hover:bg-[#b39d5b] text-white h-12 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
                       onClick={() => copyToClipboard("0655614169", "phone")}
                     >
                       <Phone className="w-5 h-5 mr-2" />
                       {copiedText === "phone" ? "คัดลอกแล้ว!" : "065-561-4169"}
                     </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full border-2 border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white py-6 text-base font-semibold rounded-xl transition-all"
-                      onClick={() => setShowLineQR(true)}
+                    <a
+                      href="https://lin.ee/5nLXDZY"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full border-2 border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white h-12 text-base font-semibold rounded-xl transition-all inline-flex items-center justify-center"
                     >
                       <MessageCircle className="w-5 h-5 mr-2" />
                       Line
-                    </Button>
+                    </a>
                     <Button
                       variant="outline"
-                      className="w-full border-gray-200 text-gray-500 hover:bg-gray-50 py-6 text-base font-medium rounded-xl transition-all"
+                      className="w-full border-gray-200 text-gray-500 hover:bg-gray-50 h-12 text-base font-medium rounded-xl transition-all"
                       onClick={() => copyToClipboard("bkgroup.ch.official@gmail.com", "email")}
                     >
                       <Mail className="w-5 h-5 mr-2" />
@@ -875,34 +927,6 @@ export default function PropertyDetailPage() {
                     </Button>
                   </div>
 
-                  {/* Line QR Modal */}
-                  {showLineQR && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                      <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-bold text-gray-900">เพิ่มเพื่อนทาง Line</h3>
-                          <button
-                            onClick={() => setShowLineQR(false)}
-                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                          >
-                            <X className="w-5 h-5 text-gray-500" />
-                          </button>
-                        </div>
-                        <div className="bg-gray-50 rounded-xl p-4 flex justify-center">
-                          <Image
-                            src="/pariwat-qr.jpg"
-                            alt="Line QR Code"
-                            width={200}
-                            height={200}
-                            className="rounded-lg"
-                          />
-                        </div>
-                        <p className="text-center text-sm text-gray-500 mt-4">
-                          สแกน QR Code เพื่อเพิ่มเพื่อนทาง Line
-                        </p>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Quick Contact Form */}
                   <div className="mt-6 pt-6 border-t border-gray-200">

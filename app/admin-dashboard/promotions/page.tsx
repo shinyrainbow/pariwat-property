@@ -34,6 +34,8 @@ interface Promotion {
   id: string;
   label: string;
   type: "hot" | "new" | "discount" | "featured";
+  discountedPrice: number | null;
+  discountedRentalPrice: number | null;
   startDate: string | null;
   endDate: string | null;
   isActive: boolean;
@@ -68,6 +70,8 @@ export default function AdminPromotionsPage() {
     propertyId: "",
     label: "",
     type: "hot" as "hot" | "new" | "discount" | "featured",
+    discountedPrice: "",
+    discountedRentalPrice: "",
     startDate: "",
     endDate: "",
     isActive: true,
@@ -169,6 +173,8 @@ export default function AdminPromotionsPage() {
       propertyId: "",
       label: "",
       type: "hot",
+      discountedPrice: "",
+      discountedRentalPrice: "",
       startDate: "",
       endDate: "",
       isActive: true,
@@ -182,6 +188,8 @@ export default function AdminPromotionsPage() {
       propertyId: promo.extension.externalPropertyId,
       label: promo.label,
       type: promo.type,
+      discountedPrice: promo.discountedPrice ? promo.discountedPrice.toString() : "",
+      discountedRentalPrice: promo.discountedRentalPrice ? promo.discountedRentalPrice.toString() : "",
       startDate: promo.startDate ? promo.startDate.split("T")[0] : "",
       endDate: promo.endDate ? promo.endDate.split("T")[0] : "",
       isActive: promo.isActive,
@@ -211,6 +219,8 @@ export default function AdminPromotionsPage() {
               promotionId: editingPromotion.id,
               label: formData.label,
               type: formData.type,
+              discountedPrice: formData.type === "discount" && formData.discountedPrice ? formData.discountedPrice : null,
+              discountedRentalPrice: formData.type === "discount" && formData.discountedRentalPrice ? formData.discountedRentalPrice : null,
               startDate: formData.startDate || null,
               endDate: formData.endDate || null,
               isActive: formData.isActive,
@@ -235,6 +245,8 @@ export default function AdminPromotionsPage() {
             body: JSON.stringify({
               label: formData.label,
               type: formData.type,
+              discountedPrice: formData.type === "discount" && formData.discountedPrice ? formData.discountedPrice : null,
+              discountedRentalPrice: formData.type === "discount" && formData.discountedRentalPrice ? formData.discountedRentalPrice : null,
               startDate: formData.startDate || null,
               endDate: formData.endDate || null,
               isActive: formData.isActive,
@@ -543,6 +555,8 @@ export default function AdminPromotionsPage() {
                           setFormData((prev) => ({
                             ...prev,
                             type: type.value as typeof formData.type,
+                            discountedPrice: type.value !== "discount" ? "" : prev.discountedPrice,
+                            discountedRentalPrice: type.value !== "discount" ? "" : prev.discountedRentalPrice,
                           }))
                         }
                         className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors ${
@@ -562,6 +576,49 @@ export default function AdminPromotionsPage() {
                   })}
                 </div>
               </div>
+
+              {/* Discounted Prices - Only shown when type is discount */}
+              {formData.type === "discount" && (
+                <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm font-medium text-blue-700">
+                    ระบุราคาหลังลด (ราคาเดิมจะแสดงเป็นราคาขีดฆ่า)
+                  </p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      ราคาขายหลังลด (บาท)
+                    </label>
+                    <Input
+                      type="number"
+                      value={formData.discountedPrice}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          discountedPrice: e.target.value,
+                        }))
+                      }
+                      placeholder="เช่น 2500000"
+                      min={0}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      ราคาเช่าหลังลด (บาท/เดือน)
+                    </label>
+                    <Input
+                      type="number"
+                      value={formData.discountedRentalPrice}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          discountedRentalPrice: e.target.value,
+                        }))
+                      }
+                      placeholder="เช่น 15000"
+                      min={0}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Date Range */}
               <div className="grid grid-cols-2 gap-4">

@@ -93,14 +93,16 @@ model PropertyExtension {
 }
 
 model Promotion {
-  id        String    @id @default(cuid())
-  label     String // "20% Off", "Hot Deal", "New Listing"
-  type      String // "discount", "featured", "urgent", "new"
-  startDate DateTime  @default(now())
-  endDate   DateTime?
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id                    String    @id @default(cuid())
+  label                 String // "20% Off", "Hot Deal", "New Listing"
+  type                  String // "discount", "featured", "urgent", "new"
+  discountedPrice       Float? // Discounted sell price when type is "discount"
+  discountedRentalPrice Float? // Discounted rental price when type is "discount"
+  startDate             DateTime  @default(now())
+  endDate               DateTime?
+  isActive              Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   extensionId String
   extension   PropertyExtension @relation(fields: [extensionId], references: [id], onDelete: Cascade)
@@ -176,4 +178,41 @@ model Inquiry {
   @@index([status])
   @@index([createdAt])
   @@index([propertyId])
+}
+
+// Portfolio - Our work/completed projects gallery
+model Portfolio {
+  id          String   @id @default(cuid())
+  imageUrl    String   // Image URL
+  title       String?  // Optional title/caption
+  description String?  @db.Text // Optional description
+  order       Int      @default(0) // Display order
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([order])
+}
+
+// Property Listings - Customer requests to sell/rent their property
+model PropertyListing {
+  id           String   @id @default(cuid())
+  name         String   // Customer name
+  phone        String   // Customer phone
+  email        String?  // Optional email
+  listingType  String   // "sell" or "rent"
+  propertyType String   // "Condo", "Townhouse", "SingleHouse", "Land"
+  location     String?  // Property location/address
+  size         String?  // Property size
+  price        String?  // Expected price
+  details      String?  @db.Text // Additional details
+  status       String   @default("new") // "new", "contacted", "in_progress", "completed", "cancelled"
+  notes        String?  @db.Text // Admin notes
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([listingType])
 }

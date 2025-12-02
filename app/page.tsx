@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Bed, Bath, Maximize, MapPin, Search, Star, Phone, Mail, ChevronDown, ChevronLeft, ChevronRight, TrendingUp, Award, ArrowRight, Quote, MessageSquare, Building2 } from "lucide-react";
+import { Bed, Bath, Maximize, MapPin, Search, Star, Phone, Mail, ChevronDown, ChevronLeft, ChevronRight, TrendingUp, Award, ArrowRight, Quote, MessageSquare, Building2, Flame, Sparkles, Percent } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/layout/header";
@@ -33,6 +33,8 @@ interface Promotion {
   label: string;
   type: string;
   isActive: boolean;
+  discountedPrice: number | null;
+  discountedRentalPrice: number | null;
 }
 
 interface PropertyTag {
@@ -105,6 +107,15 @@ interface Review {
   createdAt: string;
 }
 
+interface Portfolio {
+  id: string;
+  imageUrl: string;
+  title: string | null;
+  description: string | null;
+  order: number;
+  isActive: boolean;
+}
+
 export default function PublicPropertiesPage() {
   const router = useRouter();
   const [properties, setProperties] = useState<Property[]>([]);
@@ -113,6 +124,7 @@ export default function PublicPropertiesPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [propertiesWithPromotions, setPropertiesWithPromotions] = useState<Property[]>([]);
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -131,6 +143,9 @@ export default function PublicPropertiesPage() {
   // Hero background slideshow
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // Portfolio slideshow
+  const [currentPortfolioIndex, setCurrentPortfolioIndex] = useState(0);
+
   // Filters
   const [propertyType, setPropertyType] = useState<string>("");
   const [listingType, setListingType] = useState<string>("");
@@ -138,14 +153,32 @@ export default function PublicPropertiesPage() {
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
 
+  // Format number with commas (e.g., 1000000 -> 1,000,000)
+  const formatPriceWithCommas = (value: string): string => {
+    const numbers = value.replace(/[^\d]/g, "");
+    if (!numbers) return "";
+    return Number(numbers).toLocaleString("en-US");
+  };
+
+  // Parse formatted price back to plain number string
+  const parsePriceValue = (value: string): string => {
+    return value.replace(/,/g, "");
+  };
+
+  // Handle price input change with auto-formatting
+  const handlePriceChange = (value: string, setter: (v: string) => void) => {
+    const formatted = formatPriceWithCommas(value);
+    setter(formatted);
+  };
+
   // Handle search - navigate to /search with filters
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (propertyType && propertyType !== "all") params.set("propertyType", propertyType);
     if (listingType && listingType !== "all") params.set("listingType", listingType);
     if (bedrooms && bedrooms !== "all") params.set("bedrooms", bedrooms);
-    if (minPrice) params.set("minPrice", minPrice);
-    if (maxPrice) params.set("maxPrice", maxPrice);
+    if (minPrice) params.set("minPrice", parsePriceValue(minPrice));
+    if (maxPrice) params.set("maxPrice", parsePriceValue(maxPrice));
 
     const queryString = params.toString();
     router.push(`/search${queryString ? `?${queryString}` : ""}`);
@@ -166,6 +199,16 @@ export default function PublicPropertiesPage() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Portfolio slideshow - auto advance every 2 seconds
+  useEffect(() => {
+    if (portfolios.length === 0) return;
+    const interval = setInterval(() => {
+      setCurrentPortfolioIndex((prev) => (prev + 1) % portfolios.length);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [portfolios.length]);
 
   // Intersection observer for animations
   useEffect(() => {
@@ -222,20 +265,22 @@ export default function PublicPropertiesPage() {
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const [popularRes, closedRes, projectsRes, reviewsRes, promotionsRes] = await Promise.all([
+        const [popularRes, closedRes, projectsRes, reviewsRes, promotionsRes, portfolioRes] = await Promise.all([
           fetch("/api/public/enhanced-properties/popular"),
           fetch("/api/public/enhanced-properties/closed-deals"),
           fetch("/api/public/projects"),
           fetch("/api/public/reviews"),
           fetch("/api/public/enhanced-properties/with-promotions?limit=6"),
+          fetch("/api/public/portfolio"),
         ]);
 
-        const [popularData, closedData, projectsData, reviewsData, promotionsData] = await Promise.all([
+        const [popularData, closedData, projectsData, reviewsData, promotionsData, portfolioData] = await Promise.all([
           popularRes.json(),
           closedRes.json(),
           projectsRes.json(),
           reviewsRes.json(),
           promotionsRes.json(),
+          portfolioRes.json(),
         ]);
 
         if (popularData.success) setPopularProperties(popularData.data);
@@ -243,6 +288,7 @@ export default function PublicPropertiesPage() {
         if (projectsData.success) setProjects(projectsData.data);
         if (reviewsData.success) setReviews(reviewsData.data.slice(0, 3));
         if (promotionsData.success) setPropertiesWithPromotions(promotionsData.data.slice(0, 3));
+        if (portfolioData.success) setPortfolios(portfolioData.data);
       } catch (error) {
         console.error("Failed to fetch home data:", error);
       }
@@ -261,7 +307,7 @@ export default function PublicPropertiesPage() {
       if (type === "popular") {
         setPopularCanScrollLeft(canLeft);
         setPopularCanScrollRight(canRight);
-      } else {
+      } else if (type === "closed") {
         setClosedCanScrollLeft(canLeft);
         setClosedCanScrollRight(canRight);
       }
@@ -306,6 +352,22 @@ export default function PublicPropertiesPage() {
     const ngan = Math.floor((landSizeSqw % 400) / 100);
     const sqw = landSizeSqw % 100;
     return { rai, ngan, sqw };
+  };
+
+  // Helper function to get promotion styling based on type
+  const getPromotionStyle = (type: string) => {
+    switch (type) {
+      case "hot":
+        return { color: "bg-red-500", Icon: Flame };
+      case "new":
+        return { color: "bg-green-500", Icon: Sparkles };
+      case "discount":
+        return { color: "bg-blue-500", Icon: Percent };
+      case "featured":
+        return { color: "bg-purple-500", Icon: Award };
+      default:
+        return { color: "bg-red-500", Icon: Flame };
+    }
   };
 
   const handleResetFilters = () => {
@@ -491,10 +553,11 @@ export default function PublicPropertiesPage() {
                   ราคาต่ำสุด (฿)
                 </label>
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder="ไม่ระบุ"
                   value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
+                  onChange={(e) => handlePriceChange(e.target.value, setMinPrice)}
                   className="h-11 text-sm border-gray-200"
                 />
               </div>
@@ -504,10 +567,11 @@ export default function PublicPropertiesPage() {
                   ราคาสูงสุด (฿)
                 </label>
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder="ไม่ระบุ"
                   value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
+                  onChange={(e) => handlePriceChange(e.target.value, setMaxPrice)}
                   className="h-11 text-sm border-gray-200"
                 />
               </div>
@@ -863,13 +927,96 @@ export default function PublicPropertiesPage() {
         </div>
       </section>
 
+      {/* Portfolio Section - ผลงานของเรา (4 images in a row) */}
+      {portfolios.length > 0 && (
+        <section
+          id="portfolio-showcase"
+          ref={(el) => {
+            observerRefs.current["portfolio-showcase"] = el;
+          }}
+          className="py-16 bg-gradient-to-b from-gray-50 to-white"
+        >
+          <div className="container mx-auto px-4">
+            {/* Section Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Star className="w-6 h-6 text-[#c6af6c]" />
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                    ผลงานของเรา
+                  </h2>
+                </div>
+                <p className="text-gray-600">ตัวอย่างผลงานที่เราภูมิใจนำเสนอ</p>
+              </div>
+            </div>
+
+            {/* 4 Images Grid with auto-advance */}
+            <div className="relative overflow-hidden">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {(() => {
+                  // Calculate which 4 images to show based on currentPortfolioIndex
+                  const imagesPerPage = 4;
+                  const totalPages = Math.ceil(portfolios.length / imagesPerPage);
+                  const currentPage = currentPortfolioIndex % totalPages;
+                  const startIndex = currentPage * imagesPerPage;
+                  const visiblePortfolios = portfolios.slice(startIndex, startIndex + imagesPerPage);
+
+                  return visiblePortfolios.map((portfolio) => (
+                    <div
+                      key={portfolio.id}
+                      className="relative aspect-square rounded-xl overflow-hidden shadow-lg group cursor-pointer hover:shadow-2xl transition-all duration-500"
+                    >
+                      <Image
+                        src={portfolio.imageUrl}
+                        alt={portfolio.title || "ผลงานของเรา"}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      {portfolio.title && (
+                        <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                          <p className="text-white font-semibold text-sm line-clamp-1">
+                            {portfolio.title}
+                          </p>
+                          {portfolio.description && (
+                            <p className="text-white/80 text-xs mt-1 line-clamp-1">
+                              {portfolio.description}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ));
+                })()}
+              </div>
+
+              {/* Dots Navigation */}
+              <div className="flex justify-center gap-2 mt-6">
+                {Array.from({ length: Math.max(1, Math.ceil(portfolios.length / 4)) }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentPortfolioIndex(index)}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      (currentPortfolioIndex % Math.max(1, Math.ceil(portfolios.length / 4))) === index
+                        ? "bg-[#c6af6c] w-8"
+                        : "bg-gray-300 hover:bg-gray-400"
+                    }`}
+                    aria-label={`ไปยังหน้าที่ ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Projects Section */}
       <section
         id="projects"
         ref={(el) => {
           observerRefs.current["projects"] = el;
         }}
-        className="py-16 bg-white"
+        className="py-16 bg-gray-50"
       >
         <div className="container mx-auto px-4">
           {/* Section Header */}
@@ -983,24 +1130,66 @@ export default function PublicPropertiesPage() {
                         <div className="w-full h-full bg-gradient-to-br from-[#c6af6c] to-[#b39d5b]" />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                      {property.extension?.promotions && property.extension.promotions[0] && (
-                        <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold text-white ${
-                          property.extension.promotions[0].type === "hot" ? "bg-red-500" :
-                          property.extension.promotions[0].type === "new" ? "bg-green-500" :
-                          property.extension.promotions[0].type === "discount" ? "bg-blue-500" :
-                          "bg-purple-500"
-                        }`}>
-                          {property.extension.promotions[0].label}
-                        </div>
-                      )}
+                      {property.extension?.promotions && property.extension.promotions[0] && (() => {
+                        const promo = property.extension.promotions[0];
+                        const { color, Icon } = getPromotionStyle(promo.type);
+                        return (
+                          <div className={`absolute top-4 right-4 ${color} px-3 py-1 rounded-full text-sm font-bold text-white flex items-center gap-1`}>
+                            <Icon className="w-4 h-4" />
+                            {promo.label}
+                          </div>
+                        );
+                      })()}
                       <div className="absolute bottom-4 left-4 right-4 text-white">
-                        <p className="text-2xl font-bold">
-                          {property.rentalRateNum && property.rentalRateNum > 0
-                            ? `เช่า: ฿${formatPrice(property.rentalRateNum)}/เดือน`
-                            : property.sellPriceNum && property.sellPriceNum > 0
-                            ? `ขาย: ฿${formatPrice(property.sellPriceNum)}`
-                            : "ติดต่อสอบถาม"}
-                        </p>
+                        {(() => {
+                          const discountPromo = property.extension?.promotions?.find(
+                            (p) => p.type === "discount" && (p.discountedPrice || p.discountedRentalPrice)
+                          );
+
+                          // Show rental price with discount
+                          if (property.rentalRateNum && property.rentalRateNum > 0) {
+                            if (discountPromo?.discountedRentalPrice) {
+                              return (
+                                <div>
+                                  <p className="text-sm line-through text-white/70">
+                                    เช่า: ฿{formatPrice(property.rentalRateNum)}/เดือน
+                                  </p>
+                                  <p className="text-2xl font-bold text-red-400">
+                                    เช่า: ฿{formatPrice(discountPromo.discountedRentalPrice)}/เดือน
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return (
+                              <p className="text-2xl font-bold">
+                                เช่า: ฿{formatPrice(property.rentalRateNum)}/เดือน
+                              </p>
+                            );
+                          }
+
+                          // Show sell price with discount
+                          if (property.sellPriceNum && property.sellPriceNum > 0) {
+                            if (discountPromo?.discountedPrice) {
+                              return (
+                                <div>
+                                  <p className="text-sm line-through text-white/70">
+                                    ขาย: ฿{formatPrice(property.sellPriceNum)}
+                                  </p>
+                                  <p className="text-2xl font-bold text-red-400">
+                                    ขาย: ฿{formatPrice(discountPromo.discountedPrice)}
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return (
+                              <p className="text-2xl font-bold">
+                                ขาย: ฿{formatPrice(property.sellPriceNum)}
+                              </p>
+                            );
+                          }
+
+                          return <p className="text-2xl font-bold">ติดต่อสอบถาม</p>;
+                        })()}
                       </div>
                     </div>
                     <div className="p-4">
@@ -1154,11 +1343,16 @@ export default function PublicPropertiesPage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                       {/* Promotion Badge */}
-                      {property.extension?.promotions && property.extension.promotions.length > 0 && (
-                        <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm transform group-hover:scale-110 transition-transform duration-300 animate-pulse">
-                          {property.extension.promotions[0].label}
-                        </div>
-                      )}
+                      {property.extension?.promotions && property.extension.promotions.length > 0 && (() => {
+                        const promo = property.extension.promotions[0];
+                        const { color, Icon } = getPromotionStyle(promo.type);
+                        return (
+                          <div className={`absolute top-2 right-2 ${color} text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm transform group-hover:scale-110 transition-transform duration-300 flex items-center gap-1`}>
+                            <Icon className="w-3 h-3" />
+                            {promo.label}
+                          </div>
+                        );
+                      })()}
                       {/* Listing Type Badge - only show if no promotion */}
                       {(!property.extension?.promotions || property.extension.promotions.length === 0) && (
                         <>
@@ -1519,6 +1713,25 @@ export default function PublicPropertiesPage() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Floating LINE CTA Button */}
+      <a
+        href="https://lin.ee/5nLXDZY"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#00B900] hover:bg-[#00a000] text-white px-4 py-3 rounded-full shadow-2xl hover:shadow-[#00B900]/50 transform hover:scale-110 transition-all duration-300 group"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          className="w-6 h-6"
+        >
+          <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.066-.022.137-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+        </svg>
+        <span className="hidden sm:inline font-semibold">LINE</span>
+        <MessageSquare className="w-4 h-4 absolute -top-1 -right-1 text-white bg-red-500 rounded-full p-0.5 animate-pulse" />
+      </a>
 
       {/* CSS Animations */}
       <style jsx>{`
