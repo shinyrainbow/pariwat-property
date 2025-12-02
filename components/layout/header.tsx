@@ -29,10 +29,10 @@ export default function Header({ transparent = false }: HeaderProps) {
   const navLinks = [
     { href: "/search?listingType=rent", label: "เช่า" },
     { href: "/search?listingType=sale", label: "ขาย" },
-    { href: "/#promotions", label: "โปรโมชัน" },
+    { href: "/promotions", label: "โปรโมชัน" },
     { href: "/other-services", label: "บริการอื่นๆ" },
-    { href: "/#reviews", label: "รีวิว" },
-    { href: "/#contact", label: "ติดต่อ" },
+    { href: "/reviews", label: "รีวิว" },
+    { href: "/contact", label: "ติดต่อ" },
   ];
 
   return (

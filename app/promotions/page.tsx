@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, Tag, Percent, Home, Bed, Bath, Maximize, MapPin } from "lucide-react";
+import { Building2, Tag, Percent, Home, Bed, Bath, Maximize, MapPin, Flame, Sparkles, Award } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import Header from "@/components/layout/header";
@@ -177,15 +177,24 @@ export default function PromotionsPage() {
 
                         {/* Promotion Badges */}
                         <div className="absolute top-3 right-3 flex flex-col gap-1">
-                          {property.extension?.promotions.slice(0, 2).map((promo) => (
-                            <span
-                              key={promo.id}
-                              className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"
-                            >
-                              <Percent className="w-3 h-3" />
-                              {promo.label}
-                            </span>
-                          ))}
+                          {property.extension?.promotions.slice(0, 2).map((promo) => {
+                            const promoConfig = {
+                              hot: { color: "bg-red-500", Icon: Flame },
+                              new: { color: "bg-green-500", Icon: Sparkles },
+                              discount: { color: "bg-blue-500", Icon: Percent },
+                              featured: { color: "bg-purple-500", Icon: Award },
+                            }[promo.type] || { color: "bg-red-500", Icon: Percent };
+                            const { color, Icon } = promoConfig;
+                            return (
+                              <span
+                                key={promo.id}
+                                className={`${color} text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1`}
+                              >
+                                <Icon className="w-3 h-3" />
+                                {promo.label}
+                              </span>
+                            );
+                          })}
                         </div>
                       </div>
 
