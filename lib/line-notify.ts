@@ -3,6 +3,8 @@
  * Sends notifications to LINE OA admin
  */
 
+import { prisma } from "@/lib/prisma";
+
 const LINE_CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 const LINE_ADMIN_USER_ID = process.env.LINE_ADMIN_USER_ID;
 
@@ -11,9 +13,33 @@ interface LineNotifyOptions {
 }
 
 /**
+ * Check if LINE notifications are enabled in site settings
+ */
+async function isLineNotificationEnabled(): Promise<boolean> {
+  try {
+    const setting = await prisma.siteSetting.findUnique({
+      where: { key: "lineNotificationEnabled" },
+    });
+    // Default to true if setting doesn't exist
+    return setting?.value !== "false";
+  } catch (error) {
+    console.error("Failed to check LINE notification setting:", error);
+    // Default to true if we can't check the setting
+    return true;
+  }
+}
+
+/**
  * Send a push message to the LINE OA admin
  */
 export async function sendLineNotification({ message }: LineNotifyOptions): Promise<boolean> {
+  // Check if LINE notifications are enabled
+  const enabled = await isLineNotificationEnabled();
+  if (!enabled) {
+    console.log("LINE notification skipped: disabled in settings");
+    return false;
+  }
+
   if (!LINE_CHANNEL_ACCESS_TOKEN || !LINE_ADMIN_USER_ID) {
     console.warn("LINE notification not configured: missing LINE_CHANNEL_ACCESS_TOKEN or LINE_ADMIN_USER_ID");
     return false;

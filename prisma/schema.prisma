@@ -216,3 +216,13 @@ model PropertyListing {
   @@index([createdAt])
   @@index([listingType])
 }
+
+// Site Settings - Global site configuration
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique // Setting key (e.g., "lineNotificationEnabled")
+  value     String   // Setting value (stored as string, parsed as needed)
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+}

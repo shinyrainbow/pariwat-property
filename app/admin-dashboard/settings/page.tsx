@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { User, Mail, Lock, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { User, Mail, Lock, Loader2, CheckCircle, AlertCircle, Bell } from "lucide-react";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -26,6 +26,54 @@ export default function SettingsPage() {
     type: "success" | "error";
     text: string;
   } | null>(null);
+
+  // LINE notification state
+  const [lineNotificationEnabled, setLineNotificationEnabled] = useState(true);
+  const [loadingSettings, setLoadingSettings] = useState(true);
+  const [savingLineNotification, setSavingLineNotification] = useState(false);
+
+  // Fetch settings on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch("/api/admin/settings");
+        const data = await res.json();
+        if (data.success && data.data) {
+          // Default to true if not set
+          setLineNotificationEnabled(data.data.lineNotificationEnabled !== "false");
+        }
+      } catch (error) {
+        console.error("Failed to fetch settings:", error);
+      } finally {
+        setLoadingSettings(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleToggleLineNotification = async () => {
+    const newValue = !lineNotificationEnabled;
+    setSavingLineNotification(true);
+
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: "lineNotificationEnabled",
+          value: String(newValue),
+        }),
+      });
+
+      if (res.ok) {
+        setLineNotificationEnabled(newValue);
+      }
+    } catch (error) {
+      console.error("Failed to update LINE notification setting:", error);
+    } finally {
+      setSavingLineNotification(false);
+    }
+  };
 
   const handleChangePassword = async () => {
     // Client-side validation
@@ -223,72 +271,51 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      {/* Notification Settings */}
-      {/* <Card className="p-6">
+      {/* LINE Notification Settings */}
+      <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-[#c6af6c]/10 rounded-lg">
-            <Bell className="w-5 h-5 text-[#c6af6c]" />
+          <div className="p-2 bg-[#06C755]/10 rounded-lg">
+            <Bell className="w-5 h-5 text-[#06C755]" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
-              การแจ้งเตือน
+              การแจ้งเตือน LINE
             </h2>
-            <p className="text-sm text-gray-500">ตั้งค่าการแจ้งเตือนทางอีเมล</p>
+            <p className="text-sm text-gray-500">ตั้งค่าการแจ้งเตือนผ่าน LINE</p>
           </div>
         </div>
 
         <div className="space-y-4">
-          {[
-            {
-              key: "emailNewLead",
-              label: "ลูกค้าใหม่สนใจทรัพย์สิน",
-              desc: "รับอีเมลเมื่อมีลูกค้าติดต่อสอบถาม",
-            },
-            {
-              key: "emailPropertyView",
-              label: "มีคนเข้าชมทรัพย์สิน",
-              desc: "รับอีเมลเมื่อทรัพย์สินของคุณมียอดเข้าชมสูง",
-            },
-            {
-              key: "emailWeeklyReport",
-              label: "รายงานประจำสัปดาห์",
-              desc: "รับสรุปยอดเข้าชมและสถิติทุกสัปดาห์",
-            },
-          ].map((item) => (
-            <div
-              key={item.key}
-              className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
-            >
-              <div>
-                <p className="text-sm font-medium text-gray-900">{item.label}</p>
-                <p className="text-xs text-gray-500">{item.desc}</p>
-              </div>
-              <button
-                type="button"
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  notifications[item.key as keyof typeof notifications]
-                    ? "bg-[#c6af6c]"
-                    : "bg-gray-200"
-                }`}
-                onClick={() =>
-                  setNotifications((prev) => ({
-                    ...prev,
-                    [item.key]: !prev[item.key as keyof typeof notifications],
-                  }))
-                }
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    notifications[item.key as keyof typeof notifications]
-                      ? "translate-x-6"
-                      : "translate-x-1"
-                  }`}
-                />
-              </button>
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <p className="text-sm font-medium text-gray-900">
+                แจ้งเตือนลูกค้าติดต่อเข้ามา
+              </p>
+              <p className="text-xs text-gray-500">
+                รับการแจ้งเตือนผ่าน LINE เมื่อมีลูกค้าติดต่อสอบถามหรือฝากทรัพย์
+              </p>
             </div>
-          ))}
+            <button
+              type="button"
+              disabled={loadingSettings || savingLineNotification}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${
+                lineNotificationEnabled
+                  ? "bg-[#06C755]"
+                  : "bg-gray-200"
+              }`}
+              onClick={handleToggleLineNotification}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow ${
+                  lineNotificationEnabled
+                    ? "translate-x-6"
+                    : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
         </div>
-      </Card> */}
+      </Card>
 
       {/* Security Settings */}
       {/* <Card className="p-6">
