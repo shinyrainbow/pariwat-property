@@ -38,6 +38,8 @@ export interface NainaHubProperty {
   roomSize: number | null;
   roomSizeNum: number;
   usableAreaSqm: number;
+  rai: number;
+  ngan: number;
   landSizeSqw: number;
   floor: string;
   building: string;

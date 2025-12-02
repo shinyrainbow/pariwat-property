@@ -26,6 +26,9 @@ import {
   X,
   Images,
   ZoomIn,
+  LandPlot,
+  Grid2x2,
+  Square,
 } from "lucide-react";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
@@ -118,6 +121,8 @@ interface Property {
   bathRoomNum: number;
   roomSizeNum: number | null;
   usableAreaSqm: number | null;
+  rai: number | null;
+  ngan: number | null;
   landSizeSqw: number | null;
   floor: string | null;
   building: string | null;
@@ -771,16 +776,42 @@ export default function PropertyDetailPage() {
                       </div>
                     </>
                   )}
-                  {property.landSizeSqw && (
+                  {property.propertyType === "Land" && (
                     <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
                       <div className="p-2 bg-[#c6af6c]/10 rounded-lg">
-                        <Home className="w-6 h-6 text-[#c6af6c]" />
+                        <LandPlot className="w-6 h-6 text-[#c6af6c]" />
                       </div>
                       <div>
                         <div className="text-2xl font-bold text-gray-900">
-                          {property.landSizeSqw}
+                          {property.rai ?? 0}
                         </div>
-                        <div className="text-sm text-gray-500">ตร.วา</div>
+                        <div className="text-sm text-gray-500">ไร่</div>
+                      </div>
+                    </div>
+                  )}
+                  {property.propertyType === "Land" && (
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                      <div className="p-2 bg-[#c6af6c]/10 rounded-lg">
+                        <Grid2x2 className="w-6 h-6 text-[#c6af6c]" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">
+                          {property.ngan ?? 0}
+                        </div>
+                        <div className="text-sm text-gray-500">งาน</div>
+                      </div>
+                    </div>
+                  )}
+                  {property.propertyType === "Land" && (
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                      <div className="p-2 bg-[#c6af6c]/10 rounded-lg">
+                        <Square className="w-6 h-6 text-[#c6af6c]" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">
+                          {property.landSizeSqw ?? 0}
+                        </div>
+                        <div className="text-sm text-gray-500">ตร.ว.</div>
                       </div>
                     </div>
                   )}
