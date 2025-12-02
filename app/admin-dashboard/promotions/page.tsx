@@ -65,6 +65,18 @@ export default function AdminPromotionsPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const { confirm } = useConfirmDialog();
 
+  // Format number with commas (e.g., 1000000 -> 1,000,000)
+  const formatPriceWithCommas = (value: string): string => {
+    const numbers = value.replace(/[^\d]/g, "");
+    if (!numbers) return "";
+    return Number(numbers).toLocaleString("en-US");
+  };
+
+  // Parse formatted price back to plain number string
+  const parsePriceValue = (value: string): string => {
+    return value.replace(/,/g, "");
+  };
+
   // Form state
   const [formData, setFormData] = useState({
     propertyId: "",
@@ -188,8 +200,8 @@ export default function AdminPromotionsPage() {
       propertyId: promo.extension.externalPropertyId,
       label: promo.label,
       type: promo.type,
-      discountedPrice: promo.discountedPrice ? promo.discountedPrice.toString() : "",
-      discountedRentalPrice: promo.discountedRentalPrice ? promo.discountedRentalPrice.toString() : "",
+      discountedPrice: promo.discountedPrice ? formatPriceWithCommas(promo.discountedPrice.toString()) : "",
+      discountedRentalPrice: promo.discountedRentalPrice ? formatPriceWithCommas(promo.discountedRentalPrice.toString()) : "",
       startDate: promo.startDate ? promo.startDate.split("T")[0] : "",
       endDate: promo.endDate ? promo.endDate.split("T")[0] : "",
       isActive: promo.isActive,
@@ -219,8 +231,8 @@ export default function AdminPromotionsPage() {
               promotionId: editingPromotion.id,
               label: formData.label,
               type: formData.type,
-              discountedPrice: formData.type === "discount" && formData.discountedPrice ? formData.discountedPrice : null,
-              discountedRentalPrice: formData.type === "discount" && formData.discountedRentalPrice ? formData.discountedRentalPrice : null,
+              discountedPrice: formData.type === "discount" && formData.discountedPrice ? parsePriceValue(formData.discountedPrice) : null,
+              discountedRentalPrice: formData.type === "discount" && formData.discountedRentalPrice ? parsePriceValue(formData.discountedRentalPrice) : null,
               startDate: formData.startDate || null,
               endDate: formData.endDate || null,
               isActive: formData.isActive,
@@ -245,8 +257,8 @@ export default function AdminPromotionsPage() {
             body: JSON.stringify({
               label: formData.label,
               type: formData.type,
-              discountedPrice: formData.type === "discount" && formData.discountedPrice ? formData.discountedPrice : null,
-              discountedRentalPrice: formData.type === "discount" && formData.discountedRentalPrice ? formData.discountedRentalPrice : null,
+              discountedPrice: formData.type === "discount" && formData.discountedPrice ? parsePriceValue(formData.discountedPrice) : null,
+              discountedRentalPrice: formData.type === "discount" && formData.discountedRentalPrice ? parsePriceValue(formData.discountedRentalPrice) : null,
               startDate: formData.startDate || null,
               endDate: formData.endDate || null,
               isActive: formData.isActive,
@@ -588,16 +600,16 @@ export default function AdminPromotionsPage() {
                       ราคาขายหลังลด (บาท)
                     </label>
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       value={formData.discountedPrice}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          discountedPrice: e.target.value,
+                          discountedPrice: formatPriceWithCommas(e.target.value),
                         }))
                       }
-                      placeholder="เช่น 2500000"
-                      min={0}
+                      placeholder="เช่น 2,500,000"
                     />
                   </div>
                   <div>
@@ -605,16 +617,16 @@ export default function AdminPromotionsPage() {
                       ราคาเช่าหลังลด (บาท/เดือน)
                     </label>
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       value={formData.discountedRentalPrice}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          discountedRentalPrice: e.target.value,
+                          discountedRentalPrice: formatPriceWithCommas(e.target.value),
                         }))
                       }
-                      placeholder="เช่น 15000"
-                      min={0}
+                      placeholder="เช่น 15,000"
                     />
                   </div>
                 </div>

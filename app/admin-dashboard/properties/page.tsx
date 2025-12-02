@@ -107,6 +107,18 @@ export default function PropertiesListPage() {
   const [extensionFilter, setExtensionFilter] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
 
+  // Format number with commas (e.g., 1000000 -> 1,000,000)
+  const formatPriceWithCommas = (value: string): string => {
+    const numbers = value.replace(/[^\d]/g, "");
+    if (!numbers) return "";
+    return Number(numbers).toLocaleString("en-US");
+  };
+
+  // Parse formatted price back to plain number string
+  const parsePriceValue = (value: string): string => {
+    return value.replace(/,/g, "");
+  };
+
   // Modal states
   const [showPromotionModal, setShowPromotionModal] = useState<Property | null>(null);
   const [promotionForm, setPromotionForm] = useState({
@@ -257,8 +269,8 @@ export default function PropertiesListPage() {
         body: JSON.stringify({
           label: promotionForm.label,
           type: promotionForm.type,
-          discountedPrice: promotionForm.type === "discount" && promotionForm.discountedPrice ? promotionForm.discountedPrice : null,
-          discountedRentalPrice: promotionForm.type === "discount" && promotionForm.discountedRentalPrice ? promotionForm.discountedRentalPrice : null,
+          discountedPrice: promotionForm.type === "discount" && promotionForm.discountedPrice ? parsePriceValue(promotionForm.discountedPrice) : null,
+          discountedRentalPrice: promotionForm.type === "discount" && promotionForm.discountedRentalPrice ? parsePriceValue(promotionForm.discountedRentalPrice) : null,
           startDate: promotionForm.startDate || null,
           endDate: promotionForm.endDate || null,
           isActive: promotionForm.isActive,
@@ -823,16 +835,16 @@ export default function PropertiesListPage() {
                       ราคาขายหลังลด (บาท)
                     </label>
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       value={promotionForm.discountedPrice}
                       onChange={(e) =>
                         setPromotionForm((prev) => ({
                           ...prev,
-                          discountedPrice: e.target.value,
+                          discountedPrice: formatPriceWithCommas(e.target.value),
                         }))
                       }
-                      placeholder="เช่น 2500000"
-                      min={0}
+                      placeholder="เช่น 2,500,000"
                     />
                   </div>
                   <div>
@@ -840,16 +852,16 @@ export default function PropertiesListPage() {
                       ราคาเช่าหลังลด (บาท/เดือน)
                     </label>
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       value={promotionForm.discountedRentalPrice}
                       onChange={(e) =>
                         setPromotionForm((prev) => ({
                           ...prev,
-                          discountedRentalPrice: e.target.value,
+                          discountedRentalPrice: formatPriceWithCommas(e.target.value),
                         }))
                       }
-                      placeholder="เช่น 15000"
-                      min={0}
+                      placeholder="เช่น 15,000"
                     />
                   </div>
                 </div>
