@@ -60,6 +60,7 @@ interface Property {
   views: number;
   createdAt: string;
   updatedAt: string;
+  note: string | null;
   project: {
     projectNameEn: string;
     projectNameTh: string;
@@ -587,8 +588,9 @@ export default function PropertyDetailPage() {
                   isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
                 }`}
               >
+
                 <div className="flex flex-wrap gap-6">
-                  {property.rentalRateNum && property.rentalRateNum > 0 && (
+                  {property.rentalRateNum !== null && property.rentalRateNum > 0 && (
                     <div>
                       <div className="text-sm text-gray-500 mb-1">
                         ค่าเช่า / เดือน
@@ -598,7 +600,7 @@ export default function PropertyDetailPage() {
                       </div>
                     </div>
                   )}
-                  {property.sellPriceNum && property.sellPriceNum > 0 && (
+                  {property.sellPriceNum !== null && property.sellPriceNum > 0 && (
                     <div>
                       <div className="text-sm text-gray-500 mb-1">ราคาขาย</div>
                       <div className="text-3xl font-bold text-[#c6af6c]">
@@ -619,39 +621,43 @@ export default function PropertyDetailPage() {
                   รายละเอียดทรัพย์สิน
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                    <div className="p-2 bg-[#c6af6c]/10 rounded-lg">
-                      <Bed className="w-6 h-6 text-[#c6af6c]" />
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-gray-900">
-                        {property.bedRoomNum}
+                  {property.propertyType !== "Land" && (
+                    <>
+                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="p-2 bg-[#c6af6c]/10 rounded-lg">
+                          <Bed className="w-6 h-6 text-[#c6af6c]" />
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-gray-900">
+                            {property.bedRoomNum}
+                          </div>
+                          <div className="text-sm text-gray-500">ห้องนอน</div>
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500">ห้องนอน</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                    <div className="p-2 bg-[#c6af6c]/10 rounded-lg">
-                      <Bath className="w-6 h-6 text-[#c6af6c]" />
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-gray-900">
-                        {property.bathRoomNum}
+                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="p-2 bg-[#c6af6c]/10 rounded-lg">
+                          <Bath className="w-6 h-6 text-[#c6af6c]" />
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-gray-900">
+                            {property.bathRoomNum}
+                          </div>
+                          <div className="text-sm text-gray-500">ห้องน้ำ</div>
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500">ห้องน้ำ</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                    <div className="p-2 bg-[#c6af6c]/10 rounded-lg">
-                      <Maximize className="w-6 h-6 text-[#c6af6c]" />
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-gray-900">
-                        {getSize()}
+                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="p-2 bg-[#c6af6c]/10 rounded-lg">
+                          <Maximize className="w-6 h-6 text-[#c6af6c]" />
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-gray-900">
+                            {getSize()}
+                          </div>
+                          <div className="text-sm text-gray-500">ตร.ม.</div>
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500">ตร.ม.</div>
-                    </div>
-                  </div>
+                    </>
+                  )}
                   {property.landSizeSqw && (
                     <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
                       <div className="p-2 bg-[#c6af6c]/10 rounded-lg">
@@ -706,6 +712,22 @@ export default function PropertyDetailPage() {
                   </h2>
                   <p className="text-gray-600 leading-relaxed whitespace-pre-line">
                     {property.descriptionTh || property.descriptionEn}
+                  </p>
+                </Card>
+              )}
+
+              {/* Note */}
+              {property.note && (
+                <Card
+                  className={`p-6 border-0 shadow-lg transition-all duration-700 delay-350 ${
+                    isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+                  }`}
+                >
+                  <h2 className="text-lg font-bold text-gray-900 mb-4">
+                    เพิ่มเติม
+                  </h2>
+                  <p className="text-gray-600 leading-relaxed whitespace-pre-line">
+                    {property.note}
                   </p>
                 </Card>
               )}
@@ -1030,25 +1052,46 @@ export default function PropertyDetailPage() {
                           </div>
                         )}
 
-                        <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                          <div className="flex items-center gap-1">
-                            <Bed className="w-4 h-4 text-[#c6af6c]" />
-                            <span>{rec.bedRoomNum}</span>
+                        {rec.propertyType === "Land" ? (
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                            {rec.landSizeSqw && rec.landSizeSqw > 0 ? (
+                              <>
+                                {Math.floor(rec.landSizeSqw / 400) > 0 && (
+                                  <span className="flex items-center gap-1">
+                                    <Maximize className="w-4 h-4 text-[#c6af6c]" />
+                                    {Math.floor(rec.landSizeSqw / 400)} ไร่
+                                  </span>
+                                )}
+                                {Math.floor((rec.landSizeSqw % 400) / 100) > 0 && (
+                                  <span>{Math.floor((rec.landSizeSqw % 400) / 100)} งาน</span>
+                                )}
+                                <span>{rec.landSizeSqw % 100} ตร.ว.</span>
+                              </>
+                            ) : (
+                              <span>-</span>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Bath className="w-4 h-4 text-[#c6af6c]" />
-                            <span>{rec.bathRoomNum}</span>
+                        ) : (
+                          <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                            <div className="flex items-center gap-1">
+                              <Bed className="w-4 h-4 text-[#c6af6c]" />
+                              <span>{rec.bedRoomNum}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Bath className="w-4 h-4 text-[#c6af6c]" />
+                              <span>{rec.bathRoomNum}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Maximize className="w-4 h-4 text-[#c6af6c]" />
+                              <span>
+                                {rec.propertyType === "Condo"
+                                  ? rec.roomSizeNum || "-"
+                                  : rec.usableAreaSqm || "-"}{" "}
+                                ตร.ม.
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Maximize className="w-4 h-4 text-[#c6af6c]" />
-                            <span>
-                              {rec.propertyType === "Condo"
-                                ? rec.roomSizeNum || "-"
-                                : rec.usableAreaSqm || "-"}{" "}
-                              ตร.ม.
-                            </span>
-                          </div>
-                        </div>
+                        )}
 
                         <div className="pt-3 border-t border-gray-100">
                           {rec.rentalRateNum != null && rec.rentalRateNum > 0 && (

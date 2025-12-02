@@ -637,9 +637,11 @@ export default function PublicPropertiesPage() {
                     </div>
                     <div className="absolute bottom-3 left-3 right-3">
                       <p className="text-white font-bold text-lg line-clamp-1 drop-shadow-lg">
-                        {property.rentalRateNum
+                        {property.rentalRateNum && property.rentalRateNum > 0
                           ? `เช่า: ฿${formatPrice(property.rentalRateNum)}/เดือน`
-                          : `ขาย: ฿${formatPrice(property.sellPriceNum)}`}
+                          : property.sellPriceNum && property.sellPriceNum > 0
+                          ? `ขาย: ฿${formatPrice(property.sellPriceNum)}`
+                          : "ติดต่อสอบถาม"}
                       </p>
                     </div>
                   </div>
@@ -796,9 +798,13 @@ export default function PublicPropertiesPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     <div className="absolute bottom-3 left-3 right-3">
                       <p className="text-white font-bold text-lg line-clamp-1 drop-shadow-lg">
-                        {property.status === "sold"
-                          ? `฿${formatPrice(property.sellPriceNum)}`
-                          : `฿${formatPrice(property.rentalRateNum)}/เดือน`}
+                        {property.status === "sold" && property.sellPriceNum && property.sellPriceNum > 0
+                          ? `ขาย: ฿${formatPrice(property.sellPriceNum)}`
+                          : property.rentalRateNum && property.rentalRateNum > 0
+                          ? `เช่า: ฿${formatPrice(property.rentalRateNum)}/เดือน`
+                          : property.sellPriceNum && property.sellPriceNum > 0
+                          ? `ขาย: ฿${formatPrice(property.sellPriceNum)}`
+                          : "ติดต่อสอบถาม"}
                       </p>
                     </div>
                   </div>
@@ -989,9 +995,11 @@ export default function PublicPropertiesPage() {
                       )}
                       <div className="absolute bottom-4 left-4 right-4 text-white">
                         <p className="text-2xl font-bold">
-                          {property.rentalRateNum
+                          {property.rentalRateNum && property.rentalRateNum > 0
                             ? `เช่า: ฿${formatPrice(property.rentalRateNum)}/เดือน`
-                            : `ขาย: ฿${formatPrice(property.sellPriceNum)}`}
+                            : property.sellPriceNum && property.sellPriceNum > 0
+                            ? `ขาย: ฿${formatPrice(property.sellPriceNum)}`
+                            : "ติดต่อสอบถาม"}
                         </p>
                       </div>
                     </div>
