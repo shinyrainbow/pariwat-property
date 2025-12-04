@@ -6,7 +6,10 @@
 import { prisma } from "@/lib/prisma";
 
 const LINE_CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-const LINE_ADMIN_USER_ID = process.env.LINE_ADMIN_USER_ID;
+const LINE_ADMIN_USER_IDS = [
+  process.env.LINE_ADMIN_USER_ID,
+  process.env.LINE_ADMIN_USER_ID_2,
+].filter(Boolean) as string[];
 
 interface LineNotifyOptions {
   message: string;
@@ -40,37 +43,44 @@ export async function sendLineNotification({ message }: LineNotifyOptions): Prom
     return false;
   }
 
-  if (!LINE_CHANNEL_ACCESS_TOKEN || !LINE_ADMIN_USER_ID) {
-    console.warn("LINE notification not configured: missing LINE_CHANNEL_ACCESS_TOKEN or LINE_ADMIN_USER_ID");
+  if (!LINE_CHANNEL_ACCESS_TOKEN || LINE_ADMIN_USER_IDS.length === 0) {
+    console.warn("LINE notification not configured: missing LINE_CHANNEL_ACCESS_TOKEN or LINE_ADMIN_USER_IDS");
     return false;
   }
 
   try {
-    const response = await fetch("https://api.line.me/v2/bot/message/push", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
-      },
-      body: JSON.stringify({
-        to: LINE_ADMIN_USER_ID,
-        messages: [
-          {
-            type: "text",
-            text: message,
+    // Send to all configured users
+    const results = await Promise.all(
+      LINE_ADMIN_USER_IDS.map(async (userId) => {
+        const response = await fetch("https://api.line.me/v2/bot/message/push", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
           },
-        ],
-      }),
-    });
+          body: JSON.stringify({
+            to: userId,
+            messages: [
+              {
+                type: "text",
+                text: message,
+              },
+            ],
+          }),
+        });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("LINE notification failed:", response.status, errorText);
-      return false;
-    }
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`LINE notification failed for user ${userId}:`, response.status, errorText);
+          return false;
+        }
+        return true;
+      })
+    );
 
-    console.log("LINE notification sent successfully");
-    return true;
+    const successCount = results.filter(Boolean).length;
+    console.log(`LINE notification sent to ${successCount}/${LINE_ADMIN_USER_IDS.length} users`);
+    return successCount > 0;
   } catch (error) {
     console.error("Error sending LINE notification:", error);
     return false;
