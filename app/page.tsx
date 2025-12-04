@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Bed, Bath, Maximize, MapPin, Search, Star, Phone, Mail, ChevronDown, ChevronLeft, ChevronRight, TrendingUp, Award, ArrowRight, Quote, MessageSquare, Building2, Flame, Sparkles, Percent } from "lucide-react";
+import { Bed, Bath, Maximize, MapPin, Search, Star, Phone, Mail, ChevronDown, ChevronLeft, ChevronRight, TrendingUp, Award, ArrowRight, Quote, MessageSquare, Building2, Flame, Sparkles, Percent, LandPlot, Grid2x2, Square } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/layout/header";
@@ -72,6 +72,8 @@ interface Property {
   bathRoomNum: number;
   roomSizeNum: number | null;
   usableAreaSqm: number | null;
+  rai: number | null;
+  ngan: number | null;
   landSizeSqw: number | null;
   floor: string | null;
   building: string | null;
@@ -343,15 +345,6 @@ export default function PublicPropertiesPage() {
       return property.roomSizeNum ? `${property.roomSizeNum}` : "-";
     }
     return property.usableAreaSqm ? `${property.usableAreaSqm}` : "-";
-  };
-
-  // Helper function to format land size in Thai units (rai-ngan-wa)
-  const formatLandSize = (landSizeSqw: number | null) => {
-    if (!landSizeSqw) return null;
-    const rai = Math.floor(landSizeSqw / 400);
-    const ngan = Math.floor((landSizeSqw % 400) / 100);
-    const sqw = landSizeSqw % 100;
-    return { rai, ngan, sqw };
   };
 
   // Helper function to get promotion styling based on type
@@ -721,24 +714,18 @@ export default function PublicPropertiesPage() {
                     )}
                     {property.propertyType === "Land" ? (
                       <div className="flex items-center gap-2 text-xs text-gray-600">
-                        {(() => {
-                          const landSize = formatLandSize(property.landSizeSqw);
-                          if (!landSize) return <span>-</span>;
-                          return (
-                            <>
-                              {landSize.rai > 0 && (
-                                <span className="flex items-center gap-1">
-                                  <Maximize className="w-3 h-3 text-[#c6af6c]" />
-                                  {landSize.rai} ไร่
-                                </span>
-                              )}
-                              {landSize.ngan > 0 && (
-                                <span>{landSize.ngan} งาน</span>
-                              )}
-                              <span>{landSize.sqw} ตร.ว.</span>
-                            </>
-                          );
-                        })()}
+                        <span className="flex items-center gap-1">
+                          <LandPlot className="w-3 h-3 text-[#c6af6c]" />
+                          {property.rai ?? 0} ไร่
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Grid2x2 className="w-3 h-3 text-[#c6af6c]" />
+                          {property.ngan ?? 0} งาน
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Square className="w-3 h-3 text-[#c6af6c]" />
+                          {property.landSizeSqw ?? 0} ตร.ว.
+                        </span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-3 text-xs text-gray-600">
@@ -884,24 +871,18 @@ export default function PublicPropertiesPage() {
                     )}
                     {property.propertyType === "Land" ? (
                       <div className="flex items-center gap-2 text-xs text-gray-600">
-                        {(() => {
-                          const landSize = formatLandSize(property.landSizeSqw);
-                          if (!landSize) return <span>-</span>;
-                          return (
-                            <>
-                              {landSize.rai > 0 && (
-                                <span className="flex items-center gap-1">
-                                  <Maximize className="w-3 h-3 text-[#c6af6c]" />
-                                  {landSize.rai} ไร่
-                                </span>
-                              )}
-                              {landSize.ngan > 0 && (
-                                <span>{landSize.ngan} งาน</span>
-                              )}
-                              <span>{landSize.sqw} ตร.ว.</span>
-                            </>
-                          );
-                        })()}
+                        <span className="flex items-center gap-1">
+                          <LandPlot className="w-3 h-3 text-[#c6af6c]" />
+                          {property.rai ?? 0} ไร่
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Grid2x2 className="w-3 h-3 text-[#c6af6c]" />
+                          {property.ngan ?? 0} งาน
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Square className="w-3 h-3 text-[#c6af6c]" />
+                          {property.landSizeSqw ?? 0} ตร.ว.
+                        </span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-3 text-xs text-gray-600">
@@ -1202,24 +1183,18 @@ export default function PublicPropertiesPage() {
                       </p>
                       {property.propertyType === "Land" ? (
                         <div className="flex items-center gap-2 text-xs text-gray-500">
-                          {(() => {
-                            const landSize = formatLandSize(property.landSizeSqw);
-                            if (!landSize) return <span>-</span>;
-                            return (
-                              <>
-                                {landSize.rai > 0 && (
-                                  <span className="flex items-center gap-1">
-                                    <Maximize className="w-3 h-3" />
-                                    {landSize.rai} ไร่
-                                  </span>
-                                )}
-                                {landSize.ngan > 0 && (
-                                  <span>{landSize.ngan} งาน</span>
-                                )}
-                                <span>{landSize.sqw} ตร.ว.</span>
-                              </>
-                            );
-                          })()}
+                          <span className="flex items-center gap-1">
+                            <LandPlot className="w-3 h-3 text-[#c6af6c]" />
+                            {property.rai ?? 0} ไร่
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Grid2x2 className="w-3 h-3 text-[#c6af6c]" />
+                            {property.ngan ?? 0} งาน
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Square className="w-3 h-3 text-[#c6af6c]" />
+                            {property.landSizeSqw ?? 0} ตร.ว.
+                          </span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-3 text-xs text-gray-500">
@@ -1416,28 +1391,18 @@ export default function PublicPropertiesPage() {
                       {/* Property Features */}
                       {property.propertyType === "Land" ? (
                         <div className="flex items-center gap-2 text-xs text-gray-600 mb-2 pb-2 border-b border-gray-100">
-                          {(() => {
-                            const landSize = formatLandSize(property.landSizeSqw);
-                            if (!landSize) return <span>-</span>;
-                            return (
-                              <>
-                                {landSize.rai > 0 && (
-                                  <div className="flex items-center gap-1">
-                                    <Maximize className="w-3 h-3 text-[#c6af6c]" />
-                                    <span className="font-semibold">{landSize.rai} ไร่</span>
-                                  </div>
-                                )}
-                                {landSize.ngan > 0 && (
-                                  <div className="flex items-center gap-1">
-                                    <span className="font-semibold">{landSize.ngan} งาน</span>
-                                  </div>
-                                )}
-                                <div className="flex items-center gap-1">
-                                  <span className="font-semibold">{landSize.sqw} ตร.ว.</span>
-                                </div>
-                              </>
-                            );
-                          })()}
+                          <div className="flex items-center gap-1">
+                            <LandPlot className="w-3 h-3 text-[#c6af6c]" />
+                            <span className="font-semibold">{property.rai ?? 0} ไร่</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Grid2x2 className="w-3 h-3 text-[#c6af6c]" />
+                            <span className="font-semibold">{property.ngan ?? 0} งาน</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Square className="w-3 h-3 text-[#c6af6c]" />
+                            <span className="font-semibold">{property.landSizeSqw ?? 0} ตร.ว.</span>
+                          </div>
                         </div>
                       ) : (
                         <div className="flex items-center gap-3 text-xs text-gray-600 mb-2 pb-2 border-b border-gray-100">
