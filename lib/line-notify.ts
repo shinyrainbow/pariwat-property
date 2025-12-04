@@ -6,9 +6,11 @@
 import { prisma } from "@/lib/prisma";
 
 const LINE_CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-const LINE_ADMIN_USER_IDS = [
-  process.env.LINE_ADMIN_USER_ID,
-  process.env.LINE_ADMIN_USER_ID_2,
+// Supports user IDs and group IDs
+const LINE_RECIPIENT_IDS = [
+  // process.env.LINE_ADMIN_USER_ID,
+  // process.env.LINE_ADMIN_USER_ID_2,
+  process.env.LINE_GROUP_ID,
 ].filter(Boolean) as string[];
 
 interface LineNotifyOptions {
@@ -43,15 +45,15 @@ export async function sendLineNotification({ message }: LineNotifyOptions): Prom
     return false;
   }
 
-  if (!LINE_CHANNEL_ACCESS_TOKEN || LINE_ADMIN_USER_IDS.length === 0) {
-    console.warn("LINE notification not configured: missing LINE_CHANNEL_ACCESS_TOKEN or LINE_ADMIN_USER_IDS");
+  if (!LINE_CHANNEL_ACCESS_TOKEN || LINE_RECIPIENT_IDS.length === 0) {
+    console.warn("LINE notification not configured: missing LINE_CHANNEL_ACCESS_TOKEN or LINE_RECIPIENT_IDS");
     return false;
   }
 
   try {
-    // Send to all configured users
+    // Send to all configured recipients (users and groups)
     const results = await Promise.all(
-      LINE_ADMIN_USER_IDS.map(async (userId) => {
+      LINE_RECIPIENT_IDS.map(async (recipientId) => {
         const response = await fetch("https://api.line.me/v2/bot/message/push", {
           method: "POST",
           headers: {
@@ -59,7 +61,7 @@ export async function sendLineNotification({ message }: LineNotifyOptions): Prom
             Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
           },
           body: JSON.stringify({
-            to: userId,
+            to: recipientId,
             messages: [
               {
                 type: "text",
@@ -71,7 +73,7 @@ export async function sendLineNotification({ message }: LineNotifyOptions): Prom
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(`LINE notification failed for user ${userId}:`, response.status, errorText);
+          console.error(`LINE notification failed for ${recipientId}:`, response.status, errorText);
           return false;
         }
         return true;
@@ -79,7 +81,7 @@ export async function sendLineNotification({ message }: LineNotifyOptions): Prom
     );
 
     const successCount = results.filter(Boolean).length;
-    console.log(`LINE notification sent to ${successCount}/${LINE_ADMIN_USER_IDS.length} users`);
+    console.log(`LINE notification sent to ${successCount}/${LINE_RECIPIENT_IDS.length} recipients`);
     return successCount > 0;
   } catch (error) {
     console.error("Error sending LINE notification:", error);
