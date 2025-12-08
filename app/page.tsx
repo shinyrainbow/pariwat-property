@@ -1291,60 +1291,7 @@ export default function PublicPropertiesPage() {
         </div>
       </section>
 
-      {/* CTA Section with Animation */}
-      <section
-        id="contact"
-        ref={(el) => {
-          observerRefs.current["contact"] = el;
-        }}
-        className="relative py-16 overflow-hidden"
-      >
-        {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#c6af6c] via-[#b39d5b] to-[#c6af6c] bg-[length:200%_200%] animate-gradient" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NCAwLTE4IDguMDYtMTggMThzOC4wNiAxOCAxOCAxOCAxOC04LjA2IDE4LTE4LTguMDYtMTgtMTgtMTh6bS00LjUgMjcuNUMxOC42IDQzLjIgOCAzMi43IDggMjBjMC03LjcgNi4zLTE0IDE0LTE0czE0IDYuMyAxNCAxNC02LjMgMTQtMTQgMTR6IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')] opacity-30" />
-
-        <div
-          className={`container mx-auto px-4 relative z-10 transition-all duration-1000 ${
-            isVisible["contact"]
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-10"
-          }`}
-        >
-          <div className="text-center text-white max-w-3xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              พร้อมที่จะค้นหาทรัพย์สินในฝันของคุณหรือยัง?
-            </h2>
-            <p className="text-base mb-6 text-white/90">
-              ติดต่อเราวันนี้เพื่อรับคำปรึกษาและข้อเสนอพิเศษ
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button
-                size="default"
-                className="bg-white text-[#c6af6c] hover:bg-gray-100 font-bold px-6 py-4 rounded-full transform hover:scale-110 transition-all duration-300 shadow-2xl"
-                onClick={() => {
-                  navigator.clipboard.writeText("0655614169");
-                  toast.success("คัดลอกเบอร์โทรศัพท์แล้ว");
-                }}
-              >
-                <Phone className="w-4 h-4 mr-2" />
-                065-561-4169
-              </Button>
-              <Button
-                size="default"
-                variant="outline"
-                className="bg-white/10 backdrop-blur-md border-2 border-white text-white hover:bg-white hover:text-[#c6af6c] font-bold px-6 py-4 rounded-full transform hover:scale-105 transition-all duration-300"
-                onClick={() => {
-                  navigator.clipboard.writeText("bkgroup.ch.official@gmail.com");
-                  toast.success("คัดลอกอีเมลแล้ว");
-                }}
-              >
-                <Mail className="w-4 h-4 mr-2" />
-                bkgroup.ch.official@gmail.com
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+    
 
   {/* Just Closed Deals Section */}
       <section
@@ -1681,6 +1628,61 @@ export default function PublicPropertiesPage() {
         </div>
       </section>
 
+ {/* CTA Section with Animation */}
+      <section
+        id="contact"
+        ref={(el) => {
+          observerRefs.current["contact"] = el;
+        }}
+        className="relative py-16 overflow-hidden"
+      >
+        {/* Animated Background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#c6af6c] via-[#b39d5b] to-[#c6af6c] bg-[length:200%_200%] animate-gradient" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NCAwLTE4IDguMDYtMTggMThzOC4wNiAxOCAxOCAxOCAxOC04LjA2IDE4LTE4LTguMDYtMTgtMTgtMTh6bS00LjUgMjcuNUMxOC42IDQzLjIgOCAzMi43IDggMjBjMC03LjcgNi4zLTE0IDE0LTE0czE0IDYuMyAxNCAxNC02LjMgMTQtMTQgMTR6IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')] opacity-30" />
+
+        <div
+          className={`container mx-auto px-4 relative z-10 transition-all duration-1000 ${
+            isVisible["contact"]
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-10"
+          }`}
+        >
+          <div className="text-center text-white max-w-3xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              พร้อมที่จะค้นหาทรัพย์สินในฝันของคุณหรือยัง?
+            </h2>
+            <p className="text-base mb-6 text-white/90">
+              ติดต่อเราวันนี้เพื่อรับคำปรึกษาและข้อเสนอพิเศษ
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                size="default"
+                className="bg-white text-[#c6af6c] hover:bg-gray-100 font-bold px-6 py-4 rounded-full transform hover:scale-110 transition-all duration-300 shadow-2xl"
+                onClick={() => {
+                  navigator.clipboard.writeText("0655614169");
+                  toast.success("คัดลอกเบอร์โทรศัพท์แล้ว");
+                }}
+              >
+                <Phone className="w-4 h-4 mr-2" />
+                065-561-4169
+              </Button>
+              <Button
+                size="default"
+                variant="outline"
+                className="bg-white/10 backdrop-blur-md border-2 border-white text-white hover:bg-white hover:text-[#c6af6c] font-bold px-6 py-4 rounded-full transform hover:scale-105 transition-all duration-300"
+                onClick={() => {
+                  navigator.clipboard.writeText("bkgroup.ch.official@gmail.com");
+                  toast.success("คัดลอกอีเมลแล้ว");
+                }}
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                bkgroup.ch.official@gmail.com
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
       {/* Footer */}
       <Footer />
 
