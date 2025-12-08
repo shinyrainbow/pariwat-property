@@ -583,6 +583,80 @@ export default function PublicPropertiesPage() {
         </div>
       </section>
 
+    
+
+      {/* Projects Section */}
+      <section
+        id="projects"
+        ref={(el) => {
+          observerRefs.current["projects"] = el;
+        }}
+        className="py-16 bg-gray-50"
+      >
+        <div className="container mx-auto px-4">
+          {/* Section Header */}
+          <div
+            className={`text-center mb-10 transition-all duration-1000 ${
+              isVisible["projects"]
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-10"
+            }`}
+          >
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+              โครงการยอดนิยม
+            </h2>
+            <div className="w-16 h-1 bg-[#c6af6c] mx-auto mb-3"></div>
+            <p className="text-gray-600">เลือกโครงการที่คุณสนใจเพื่อค้นหาทรัพย์สิน</p>
+          </div>
+
+          {/* Projects Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {projects.map((project, index) => (
+              <Link
+                key={project.projectCode}
+                href={`/search?project=${encodeURIComponent(project.projectCode)}`}
+                className={`group transition-all duration-500 ${
+                  isVisible["projects"]
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-10"
+                }`}
+                style={{ transitionDelay: `${index * 50}ms` }}
+              >
+                <Card className="relative overflow-hidden rounded-xl h-40 cursor-pointer border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105">
+                  <Image
+                    src={project.image}
+                    alt={project.projectNameTh || project.projectNameEn}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent group-hover:from-black/90 transition-all duration-300" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
+                    <Building2 className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform duration-300" />
+                    <h3 className="font-bold text-lg text-center line-clamp-2">{project.projectNameTh || project.projectNameEn}</h3>
+                    <p className="text-sm text-gray-200">{project.count} ทรัพย์สิน</p>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#c6af6c] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+                </Card>
+              </Link>
+            ))}
+          </div>
+
+          {/* View All Projects Button */}
+          <div className="text-center mt-8">
+            <Link href="/search">
+              <Button
+                variant="outline"
+                className="border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white px-8 transform hover:scale-105 transition-all duration-300"
+              >
+                ดูโครงการทั้งหมด
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+
       {/* Popular Properties Section */}
       <section
         id="popular"
@@ -751,316 +825,6 @@ export default function PublicPropertiesPage() {
         </div>
       </section>
 
-      {/* Just Closed Deals Section */}
-      <section
-        id="closed-deals"
-        ref={(el) => {
-          observerRefs.current["closed-deals"] = el;
-        }}
-        className="py-16 bg-gradient-to-b from-gray-50 to-white"
-      >
-        <div className="container mx-auto px-4">
-          {/* Section Header */}
-          <div
-            className={`flex items-center justify-between mb-8 transition-all duration-1000 ${
-              isVisible["closed-deals"]
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-10"
-            }`}
-          >
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Award className="w-6 h-6 text-[#c6af6c]" />
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                  ปิดการขายล่าสุด
-                </h2>
-              </div>
-              <p className="text-gray-600">ทรัพย์สินที่เพิ่งปิดการขายหรือเช่าสำเร็จ</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                className={`w-11 h-11 flex items-center justify-center rounded-full border-2 transition-all duration-300 ${
-                  closedCanScrollLeft
-                    ? "border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white"
-                    : "border-gray-300 text-gray-300 cursor-not-allowed"
-                }`}
-                onClick={() => scrollSlider(closedDealsSliderRef, "left", "closed")}
-                disabled={!closedCanScrollLeft}
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button
-                className={`w-11 h-11 flex items-center justify-center rounded-full border-2 transition-all duration-300 ${
-                  closedCanScrollRight
-                    ? "border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white"
-                    : "border-gray-300 text-gray-300 cursor-not-allowed"
-                }`}
-                onClick={() => scrollSlider(closedDealsSliderRef, "right", "closed")}
-                disabled={!closedCanScrollRight}
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
-
-          {/* Slider */}
-          <div
-            ref={closedDealsSliderRef}
-            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-            onScroll={() => checkSliderScroll(closedDealsSliderRef, "closed")}
-          >
-            {closedDeals.map((property, index) => (
-              <div
-                key={property.id}
-                className={`flex-shrink-0 w-72 transition-all duration-500 ${
-                  isVisible["closed-deals"]
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-10"
-                }`}
-                style={{ transitionDelay: `${index * 100}ms` }}
-              >
-                <Card className="group overflow-hidden transition-all duration-500 border-0 rounded-xl bg-white h-full relative">
-                  {/* Sold/Rented Overlay */}
-                  <div className="absolute inset-0 z-10 pointer-events-none">
-                    <div className="absolute top-0 right-0 w-32 h-32 overflow-hidden">
-                      <div
-                        className={`absolute top-4 -right-8 w-40 text-center py-1 text-xs font-bold text-white transform rotate-45 shadow-lg ${
-                          property.status === "sold" ? "bg-red-500" : "bg-blue-500"
-                        }`}
-                      >
-                        {property.status === "sold" ? "ขายแล้ว" : "เช่าแล้ว"}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="relative h-44 overflow-hidden">
-                    {property.imageUrls && property.imageUrls.length > 0 ? (
-                      <Image
-                        src={property.imageUrls[0]}
-                        alt={property.propertyTitleTh || property.propertyTitleEn}
-                        fill
-                        className="object-cover grayscale-[30%]"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full bg-gray-100">
-                        <MapPin className="w-12 h-12 text-gray-300" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <p className="text-white font-bold text-lg line-clamp-1 drop-shadow-lg">
-                        {property.status === "sold" && property.sellPriceNum && property.sellPriceNum > 0
-                          ? `฿${formatPrice(property.sellPriceNum)}`
-                          : property.rentalRateNum && property.rentalRateNum > 0
-                          ? `฿${formatPrice(property.rentalRateNum)}/เดือน`
-                          : property.sellPriceNum && property.sellPriceNum > 0
-                          ? `฿${formatPrice(property.sellPriceNum)}`
-                          : "ติดต่อสอบถาม"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 line-clamp-1 mb-1">
-                      {property.propertyTitleTh || property.propertyTitleEn}
-                    </h3>
-                    {property.project && (
-                      <p className="text-sm text-gray-500 flex items-center gap-1 mb-2">
-                        <MapPin className="w-3 h-3" />
-                        {property.project.projectNameTh || property.project.projectNameEn}
-                      </p>
-                    )}
-                    {property.propertyType === "Land" ? (
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
-                        <span className="flex items-center gap-1">
-                          <LandPlot className="w-3 h-3 text-[#c6af6c]" />
-                          {property.rai ?? 0} ไร่
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Grid2x2 className="w-3 h-3 text-[#c6af6c]" />
-                          {property.ngan ?? 0} งาน
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Square className="w-3 h-3 text-[#c6af6c]" />
-                          {property.landSizeSqw ?? 0} ตร.ว.
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3 text-xs text-gray-600">
-                        <span className="flex items-center gap-1">
-                          <Bed className="w-3 h-3 text-[#c6af6c]" />
-                          {property.bedRoomNum}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Bath className="w-3 h-3 text-[#c6af6c]" />
-                          {property.bathRoomNum}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Maximize className="w-3 h-3 text-[#c6af6c]" />
-                          {getSize(property)} ตร.ม.
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Portfolio Section - ผลงานของเรา (4 images in a row) */}
-      {portfolios.length > 0 && (
-        <section
-          id="portfolio-showcase"
-          ref={(el) => {
-            observerRefs.current["portfolio-showcase"] = el;
-          }}
-          className="py-16 bg-gradient-to-b from-gray-50 to-white"
-        >
-          <div className="container mx-auto px-4">
-            {/* Section Header */}
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Star className="w-6 h-6 text-[#c6af6c]" />
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                    ผลงานของเรา
-                  </h2>
-                </div>
-                <p className="text-gray-600">ตัวอย่างผลงานที่เราภูมิใจนำเสนอ</p>
-              </div>
-            </div>
-
-            {/* 4 Images Grid with auto-advance */}
-            <div className="relative overflow-hidden">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {(() => {
-                  // Calculate which 4 images to show based on currentPortfolioIndex
-                  const imagesPerPage = 4;
-                  const totalPages = Math.ceil(portfolios.length / imagesPerPage);
-                  const currentPage = currentPortfolioIndex % totalPages;
-                  const startIndex = currentPage * imagesPerPage;
-                  const visiblePortfolios = portfolios.slice(startIndex, startIndex + imagesPerPage);
-
-                  return visiblePortfolios.map((portfolio) => (
-                    <div
-                      key={portfolio.id}
-                      className="relative aspect-square rounded-xl overflow-hidden shadow-lg group cursor-pointer hover:shadow-2xl transition-all duration-500"
-                    >
-                      <Image
-                        src={portfolio.imageUrl}
-                        alt={portfolio.title || "ผลงานของเรา"}
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      {portfolio.title && (
-                        <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                          <p className="text-white font-semibold text-sm line-clamp-1">
-                            {portfolio.title}
-                          </p>
-                          {portfolio.description && (
-                            <p className="text-white/80 text-xs mt-1 line-clamp-1">
-                              {portfolio.description}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ));
-                })()}
-              </div>
-
-              {/* Dots Navigation */}
-              <div className="flex justify-center gap-2 mt-6">
-                {Array.from({ length: Math.max(1, Math.ceil(portfolios.length / 4)) }).map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentPortfolioIndex(index)}
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      (currentPortfolioIndex % Math.max(1, Math.ceil(portfolios.length / 4))) === index
-                        ? "bg-[#c6af6c] w-8"
-                        : "bg-gray-300 hover:bg-gray-400"
-                    }`}
-                    aria-label={`ไปยังหน้าที่ ${index + 1}`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Projects Section */}
-      <section
-        id="projects"
-        ref={(el) => {
-          observerRefs.current["projects"] = el;
-        }}
-        className="py-16 bg-gray-50"
-      >
-        <div className="container mx-auto px-4">
-          {/* Section Header */}
-          <div
-            className={`text-center mb-10 transition-all duration-1000 ${
-              isVisible["projects"]
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-10"
-            }`}
-          >
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-              โครงการยอดนิยม
-            </h2>
-            <div className="w-16 h-1 bg-[#c6af6c] mx-auto mb-3"></div>
-            <p className="text-gray-600">เลือกโครงการที่คุณสนใจเพื่อค้นหาทรัพย์สิน</p>
-          </div>
-
-          {/* Projects Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {projects.map((project, index) => (
-              <Link
-                key={project.projectCode}
-                href={`/search?project=${encodeURIComponent(project.projectCode)}`}
-                className={`group transition-all duration-500 ${
-                  isVisible["projects"]
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-10"
-                }`}
-                style={{ transitionDelay: `${index * 50}ms` }}
-              >
-                <Card className="relative overflow-hidden rounded-xl h-40 cursor-pointer border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105">
-                  <Image
-                    src={project.image}
-                    alt={project.projectNameTh || project.projectNameEn}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent group-hover:from-black/90 transition-all duration-300" />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
-                    <Building2 className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform duration-300" />
-                    <h3 className="font-bold text-lg text-center line-clamp-2">{project.projectNameTh || project.projectNameEn}</h3>
-                    <p className="text-sm text-gray-200">{project.count} ทรัพย์สิน</p>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#c6af6c] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
-                </Card>
-              </Link>
-            ))}
-          </div>
-
-          {/* View All Projects Button */}
-          <div className="text-center mt-8">
-            <Link href="/search">
-              <Button
-                variant="outline"
-                className="border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white px-8 transform hover:scale-105 transition-all duration-300"
-              >
-                ดูโครงการทั้งหมด
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* Promotions Section */}
       <section
@@ -1581,6 +1345,247 @@ export default function PublicPropertiesPage() {
           </div>
         </div>
       </section>
+
+  {/* Just Closed Deals Section */}
+      <section
+        id="closed-deals"
+        ref={(el) => {
+          observerRefs.current["closed-deals"] = el;
+        }}
+        className="py-16 bg-gradient-to-b from-gray-50 to-white"
+      >
+        <div className="container mx-auto px-4">
+          {/* Section Header */}
+          <div
+            className={`flex items-center justify-between mb-8 transition-all duration-1000 ${
+              isVisible["closed-deals"]
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-10"
+            }`}
+          >
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Award className="w-6 h-6 text-[#c6af6c]" />
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                  ปิดการขายล่าสุด
+                </h2>
+              </div>
+              <p className="text-gray-600">ทรัพย์สินที่เพิ่งปิดการขายหรือเช่าสำเร็จ</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                className={`w-11 h-11 flex items-center justify-center rounded-full border-2 transition-all duration-300 ${
+                  closedCanScrollLeft
+                    ? "border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white"
+                    : "border-gray-300 text-gray-300 cursor-not-allowed"
+                }`}
+                onClick={() => scrollSlider(closedDealsSliderRef, "left", "closed")}
+                disabled={!closedCanScrollLeft}
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                className={`w-11 h-11 flex items-center justify-center rounded-full border-2 transition-all duration-300 ${
+                  closedCanScrollRight
+                    ? "border-[#c6af6c] text-[#c6af6c] hover:bg-[#c6af6c] hover:text-white"
+                    : "border-gray-300 text-gray-300 cursor-not-allowed"
+                }`}
+                onClick={() => scrollSlider(closedDealsSliderRef, "right", "closed")}
+                disabled={!closedCanScrollRight}
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+
+          {/* Slider */}
+          <div
+            ref={closedDealsSliderRef}
+            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            onScroll={() => checkSliderScroll(closedDealsSliderRef, "closed")}
+          >
+            {closedDeals.map((property, index) => (
+              <div
+                key={property.id}
+                className={`flex-shrink-0 w-72 transition-all duration-500 ${
+                  isVisible["closed-deals"]
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-10"
+                }`}
+                style={{ transitionDelay: `${index * 100}ms` }}
+              >
+                <Card className="group overflow-hidden transition-all duration-500 border-0 rounded-xl bg-white h-full relative">
+                  {/* Sold/Rented Overlay */}
+                  <div className="absolute inset-0 z-10 pointer-events-none">
+                    <div className="absolute top-0 right-0 w-32 h-32 overflow-hidden">
+                      <div
+                        className={`absolute top-4 -right-8 w-40 text-center py-1 text-xs font-bold text-white transform rotate-45 shadow-lg ${
+                          property.status === "sold" ? "bg-red-500" : "bg-blue-500"
+                        }`}
+                      >
+                        {property.status === "sold" ? "ขายแล้ว" : "เช่าแล้ว"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="relative h-44 overflow-hidden">
+                    {property.imageUrls && property.imageUrls.length > 0 ? (
+                      <Image
+                        src={property.imageUrls[0]}
+                        alt={property.propertyTitleTh || property.propertyTitleEn}
+                        fill
+                        className="object-cover grayscale-[30%]"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full bg-gray-100">
+                        <MapPin className="w-12 h-12 text-gray-300" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <p className="text-white font-bold text-lg line-clamp-1 drop-shadow-lg">
+                        {property.status === "sold" && property.sellPriceNum && property.sellPriceNum > 0
+                          ? `฿${formatPrice(property.sellPriceNum)}`
+                          : property.rentalRateNum && property.rentalRateNum > 0
+                          ? `฿${formatPrice(property.rentalRateNum)}/เดือน`
+                          : property.sellPriceNum && property.sellPriceNum > 0
+                          ? `฿${formatPrice(property.sellPriceNum)}`
+                          : "ติดต่อสอบถาม"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 line-clamp-1 mb-1">
+                      {property.propertyTitleTh || property.propertyTitleEn}
+                    </h3>
+                    {property.project && (
+                      <p className="text-sm text-gray-500 flex items-center gap-1 mb-2">
+                        <MapPin className="w-3 h-3" />
+                        {property.project.projectNameTh || property.project.projectNameEn}
+                      </p>
+                    )}
+                    {property.propertyType === "Land" ? (
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <span className="flex items-center gap-1">
+                          <LandPlot className="w-3 h-3 text-[#c6af6c]" />
+                          {property.rai ?? 0} ไร่
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Grid2x2 className="w-3 h-3 text-[#c6af6c]" />
+                          {property.ngan ?? 0} งาน
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Square className="w-3 h-3 text-[#c6af6c]" />
+                          {property.landSizeSqw ?? 0} ตร.ว.
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 text-xs text-gray-600">
+                        <span className="flex items-center gap-1">
+                          <Bed className="w-3 h-3 text-[#c6af6c]" />
+                          {property.bedRoomNum}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Bath className="w-3 h-3 text-[#c6af6c]" />
+                          {property.bathRoomNum}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Maximize className="w-3 h-3 text-[#c6af6c]" />
+                          {getSize(property)} ตร.ม.
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
+  {/* Portfolio Section - ผลงานของเรา (4 images in a row) */}
+      {portfolios.length > 0 && (
+        <section
+          id="portfolio-showcase"
+          ref={(el) => {
+            observerRefs.current["portfolio-showcase"] = el;
+          }}
+          className="py-16 bg-gradient-to-b from-gray-50 to-white"
+        >
+          <div className="container mx-auto px-4">
+            {/* Section Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Star className="w-6 h-6 text-[#c6af6c]" />
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                    ผลงานของเรา
+                  </h2>
+                </div>
+                <p className="text-gray-600">ตัวอย่างผลงานที่เราภูมิใจนำเสนอ</p>
+              </div>
+            </div>
+
+            {/* 4 Images Grid with auto-advance */}
+            <div className="relative overflow-hidden">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {(() => {
+                  // Calculate which 4 images to show based on currentPortfolioIndex
+                  const imagesPerPage = 4;
+                  const totalPages = Math.ceil(portfolios.length / imagesPerPage);
+                  const currentPage = currentPortfolioIndex % totalPages;
+                  const startIndex = currentPage * imagesPerPage;
+                  const visiblePortfolios = portfolios.slice(startIndex, startIndex + imagesPerPage);
+
+                  return visiblePortfolios.map((portfolio) => (
+                    <div
+                      key={portfolio.id}
+                      className="relative aspect-square rounded-xl overflow-hidden shadow-lg group cursor-pointer hover:shadow-2xl transition-all duration-500"
+                    >
+                      <Image
+                        src={portfolio.imageUrl}
+                        alt={portfolio.title || "ผลงานของเรา"}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      {portfolio.title && (
+                        <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                          <p className="text-white font-semibold text-sm line-clamp-1">
+                            {portfolio.title}
+                          </p>
+                          {portfolio.description && (
+                            <p className="text-white/80 text-xs mt-1 line-clamp-1">
+                              {portfolio.description}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ));
+                })()}
+              </div>
+
+              {/* Dots Navigation */}
+              <div className="flex justify-center gap-2 mt-6">
+                {Array.from({ length: Math.max(1, Math.ceil(portfolios.length / 4)) }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentPortfolioIndex(index)}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      (currentPortfolioIndex % Math.max(1, Math.ceil(portfolios.length / 4))) === index
+                        ? "bg-[#c6af6c] w-8"
+                        : "bg-gray-300 hover:bg-gray-400"
+                    }`}
+                    aria-label={`ไปยังหน้าที่ ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Reviews Section */}
       <section
