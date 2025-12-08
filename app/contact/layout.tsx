@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     title: "ติดต่อเรา - Pariwat Property",
     description:
       "ติดต่อ Pariwat Property สำหรับบริการที่ปรึกษาอสังหาริมทรัพย์ในกรุงเทพฯ",
-    url: "https://primeestate.co.th/contact",
+    url: "www.pariwatproperty.com/contact",
     type: "website",
   },
 };

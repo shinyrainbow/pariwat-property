@@ -207,7 +207,7 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <a
-                  href="https://web.facebook.com/bkestate.boonket"
+                  href="https://www.facebook.com/tppropertyplus"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-8 rounded-xl font-semibold transition-colors inline-flex items-center gap-2"
