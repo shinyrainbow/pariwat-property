@@ -167,7 +167,7 @@ export default function OtherServicesPage() {
                     {service.linkUrl ? (
                       <a
                         href={ensureAbsoluteUrl(service.linkUrl) || "#"}
-                        target="_blank"
+                        // target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 text-[#c6af6c] hover:text-[#b39d5b] font-medium transition-colors group/link"
                       >
