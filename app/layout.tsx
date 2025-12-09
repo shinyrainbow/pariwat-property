@@ -22,7 +22,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://primeestate.co.th"),
+  metadataBase: new URL("https://www.pariwatproperty.com"),
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
   title: {
     default: "Pariwat Property - อสังหาริมทรัพย์พรีเมียม กรุงเทพฯ",
     template: "%s | Pariwat Property",
@@ -60,7 +64,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "th_TH",
-    url: "https://primeestate.co.th",
+    url: "https://www.pariwatproperty.com",
     siteName: "Pariwat Property",
     title: "Pariwat Property - อสังหาริมทรัพย์พรีเมียม กรุงเทพฯ",
     description:
@@ -96,10 +100,10 @@ export const metadata: Metadata = {
     google: "google-site-verification-code",
   },
   alternates: {
-    canonical: "https://primeestate.co.th",
+    canonical: "https://www.pariwatproperty.com",
     languages: {
-      "th-TH": "https://primeestate.co.th",
-      "en-US": "https://primeestate.co.th/en",
+      "th-TH": "https://www.pariwatproperty.com",
+      "en-US": "https://www.pariwatproperty.com/en",
     },
   },
   category: "real estate",
