@@ -113,8 +113,6 @@ export default function RootLayout({
   return (
     <html lang="th">
       <head>
-        <link rel="icon" href="/web-logo.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/web-logo.png" />
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={`${kanit.variable} font-sans antialiased`}>
