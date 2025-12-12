@@ -25,7 +25,13 @@ const propertyTypes = [
   { value: "Condo", label: "คอนโดมิเนียม" },
   { value: "Townhouse", label: "ทาวน์เฮ้าส์" },
   { value: "SingleHouse", label: "บ้านเดี่ยว" },
+  { value: "Villa", label: "วิลล่า" },
   { value: "Land", label: "ที่ดิน" },
+  { value: "Office", label: "สำนักงาน" },
+  { value: "Store", label: "ร้านค้า" },
+  { value: "Factory", label: "โรงงาน" },
+  { value: "Hotel", label: "โรงแรม" },
+  { value: "Building", label: "อาคาร" },
 ];
 
 const listingTypes = [

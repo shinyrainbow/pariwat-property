@@ -483,7 +483,13 @@ function SearchContent() {
                       <SelectItem value="Condo">คอนโด</SelectItem>
                       <SelectItem value="Townhouse">ทาวน์เฮ้าส์</SelectItem>
                       <SelectItem value="SingleHouse">บ้านเดี่ยว</SelectItem>
+                      <SelectItem value="Villa">วิลล่า</SelectItem>
                       <SelectItem value="Land">ที่ดิน</SelectItem>
+                      <SelectItem value="Office">สำนักงาน</SelectItem>
+                      <SelectItem value="Store">ร้านค้า</SelectItem>
+                      <SelectItem value="Factory">โรงงาน</SelectItem>
+                      <SelectItem value="Hotel">โรงแรม</SelectItem>
+                      <SelectItem value="Building">อาคาร</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -683,9 +689,23 @@ function SearchContent() {
                               ? "คอนโด"
                               : property.propertyType === "Townhouse"
                               ? "ทาวน์เฮ้าส์"
+                              : property.propertyType === "SingleHouse"
+                              ? "บ้านเดี่ยว"
+                              : property.propertyType === "Villa"
+                              ? "วิลล่า"
                               : property.propertyType === "Land"
                               ? "ที่ดิน"
-                              : "บ้านเดี่ยว"}
+                              : property.propertyType === "Office"
+                              ? "สำนักงาน"
+                              : property.propertyType === "Store"
+                              ? "ร้านค้า"
+                              : property.propertyType === "Factory"
+                              ? "โรงงาน"
+                              : property.propertyType === "Hotel"
+                              ? "โรงแรม"
+                              : property.propertyType === "Building"
+                              ? "อาคาร"
+                              : property.propertyType}
                           </div>
                           {/* Popular Badge */}
                           {property.extension?.isFeaturedPopular && (

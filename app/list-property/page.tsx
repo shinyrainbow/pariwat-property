@@ -249,7 +249,13 @@ export default function ListPropertyPage() {
                         <SelectItem value="Condo">คอนโด</SelectItem>
                         <SelectItem value="Townhouse">ทาวน์เฮ้าส์</SelectItem>
                         <SelectItem value="SingleHouse">บ้านเดี่ยว</SelectItem>
+                        <SelectItem value="Villa">วิลล่า</SelectItem>
                         <SelectItem value="Land">ที่ดิน</SelectItem>
+                        <SelectItem value="Office">สำนักงาน</SelectItem>
+                        <SelectItem value="Store">ร้านค้า</SelectItem>
+                        <SelectItem value="Factory">โรงงาน</SelectItem>
+                        <SelectItem value="Hotel">โรงแรม</SelectItem>
+                        <SelectItem value="Building">อาคาร</SelectItem>
                         <SelectItem value="Other">อื่นๆ</SelectItem>
                       </SelectContent>
                     </Select>
