@@ -514,7 +514,7 @@ export default function PropertiesListPage() {
                           {getPropertyTypeLabel(property.propertyType)}
                         </span>
                       </div>
-                      <h3 className="font-semibold text-gray-900 truncate">
+                      <h3 className="font-semibold text-gray-900 wrap-break-word">
                         {property.propertyTitleTh || property.propertyTitleEn}
                       </h3>
                       <p className="text-sm text-gray-500">
