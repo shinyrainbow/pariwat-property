@@ -74,7 +74,7 @@ interface Property {
   id: string;
   projectPropertyCode: string | null;
   agentPropertyCode: string | null;
-  propertyType: "Condo" | "Townhouse" | "SingleHouse" | "Land";
+  propertyType: "Condo" | "Townhouse" | "SingleHouse" | "Villa" | "Land" | "Office" | "Store" | "Factory" | "Hotel" | "Building" | "Apartment";
   propertyTitleEn: string;
   propertyTitleTh: string;
   bedRoomNum: number;
