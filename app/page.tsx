@@ -522,6 +522,7 @@ export default function PublicPropertiesPage() {
                     <SelectItem value="Factory">โรงงาน</SelectItem>
                     <SelectItem value="Hotel">โรงแรม</SelectItem>
                     <SelectItem value="Building">อาคาร</SelectItem>
+                    <SelectItem value="Apartment">อพาร์ทเมนท์</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1138,6 +1139,8 @@ export default function PublicPropertiesPage() {
                           ? "โรงแรม"
                           : property.propertyType === "Building"
                           ? "อาคาร"
+                          : property.propertyType === "Apartment"
+                          ? "อพาร์ทเมนท์"
                           : property.propertyType}
                       </div>
 

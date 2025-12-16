@@ -256,6 +256,7 @@ export default function ListPropertyPage() {
                         <SelectItem value="Factory">โรงงาน</SelectItem>
                         <SelectItem value="Hotel">โรงแรม</SelectItem>
                         <SelectItem value="Building">อาคาร</SelectItem>
+                        <SelectItem value="Apartment">อพาร์ทเมนท์</SelectItem>
                         <SelectItem value="Other">อื่นๆ</SelectItem>
                       </SelectContent>
                     </Select>

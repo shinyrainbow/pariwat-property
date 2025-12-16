@@ -32,6 +32,7 @@ const propertyTypes = [
   { value: "Factory", label: "โรงงาน" },
   { value: "Hotel", label: "โรงแรม" },
   { value: "Building", label: "อาคาร" },
+  { value: "Apartment", label: "อพาร์ทเมนท์" },
 ];
 
 const listingTypes = [

@@ -338,7 +338,14 @@ export default function PropertiesListPage() {
       Condo: "คอนโด",
       Townhouse: "ทาวน์เฮ้าส์",
       SingleHouse: "บ้านเดี่ยว",
+      Villa: "วิลล่า",
       Land: "ที่ดิน",
+      Office: "สำนักงาน",
+      Store: "ร้านค้า",
+      Factory: "โรงงาน",
+      Hotel: "โรงแรม",
+      Building: "อาคาร",
+      Apartment: "อพาร์ทเมนท์",
     };
     return labels[type] || type;
   };
@@ -396,7 +403,14 @@ export default function PropertiesListPage() {
                 <SelectItem value="Condo">คอนโด</SelectItem>
                 <SelectItem value="Townhouse">ทาวน์เฮ้าส์</SelectItem>
                 <SelectItem value="SingleHouse">บ้านเดี่ยว</SelectItem>
+                <SelectItem value="Villa">วิลล่า</SelectItem>
                 <SelectItem value="Land">ที่ดิน</SelectItem>
+                <SelectItem value="Office">สำนักงาน</SelectItem>
+                <SelectItem value="Store">ร้านค้า</SelectItem>
+                <SelectItem value="Factory">โรงงาน</SelectItem>
+                <SelectItem value="Hotel">โรงแรม</SelectItem>
+                <SelectItem value="Building">อาคาร</SelectItem>
+                <SelectItem value="Apartment">อพาร์ทเมนท์</SelectItem>
               </SelectContent>
             </Select>
           </div>
