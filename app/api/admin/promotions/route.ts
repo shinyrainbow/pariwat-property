@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { fetchNainaHubProperties } from "@/lib/nainahub";
+import { fetchAllNainaHubProperties } from "@/lib/nainahub";
 
 // GET /api/admin/promotions - Get all promotions with property info
 export async function GET() {
@@ -21,8 +21,8 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    // Fetch properties from NainaHub to get property details
-    const apiResponse = await fetchNainaHubProperties({ limit: 100 });
+    // Fetch ALL properties from NainaHub to get property details
+    const apiResponse = await fetchAllNainaHubProperties();
     const propertyMap = new Map(
       apiResponse.data.map((p) => [p.id, p])
     );

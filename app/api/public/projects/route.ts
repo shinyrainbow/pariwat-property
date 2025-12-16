@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { fetchNainaHubProperties } from "@/lib/nainahub";
+import { fetchAllNainaHubProperties } from "@/lib/nainahub";
 
 export async function GET() {
   try {
-    // Fetch all properties from NainaHub
-    const response = await fetchNainaHubProperties({ limit: 100 });
+    // Fetch ALL properties from NainaHub
+    const response = await fetchAllNainaHubProperties();
 
     // Group properties by project
     const projectMap = new Map<
