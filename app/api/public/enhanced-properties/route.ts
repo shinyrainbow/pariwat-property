@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const params: FetchPropertiesParams = {};
 
     const propertyType = searchParams.get("propertyType");
-    if (propertyType && ["Condo", "Townhouse", "SingleHouse", "Land"].includes(propertyType)) {
+    if (propertyType && ["Condo", "Townhouse", "SingleHouse", "Villa", "Land", "Office", "Store", "Factory", "Hotel", "Building", "Apartment"].includes(propertyType)) {
       params.propertyType = propertyType as FetchPropertiesParams["propertyType"];
     }
 

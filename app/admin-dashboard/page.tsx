@@ -99,7 +99,14 @@ export default function AdminDashboardPage() {
       Condo: "คอนโด",
       Townhouse: "ทาวน์เฮ้าส์",
       SingleHouse: "บ้านเดี่ยว",
+      Villa: "วิลล่า",
       Land: "ที่ดิน",
+      Office: "สำนักงาน",
+      Store: "ร้านค้า",
+      Factory: "โรงงาน",
+      Hotel: "โรงแรม",
+      Building: "อาคาร",
+      Apartment: "อพาร์ทเมนท์",
     };
     return labels[type] || type;
   };
