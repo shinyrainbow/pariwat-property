@@ -104,7 +104,14 @@ export async function GET() {
       Condo: 0,
       Townhouse: 0,
       SingleHouse: 0,
+      Villa: 0,
       Land: 0,
+      Office: 0,
+      Store: 0,
+      Factory: 0,
+      Hotel: 0,
+      Building: 0,
+      Apartment: 0,
     };
 
     properties.forEach((p) => {
