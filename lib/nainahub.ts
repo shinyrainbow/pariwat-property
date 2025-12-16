@@ -123,13 +123,32 @@ export async function fetchNainaHubProperties(
 }
 
 /**
+ * Fetch ALL properties from NainaHub by first checking total count
+ */
+export async function fetchAllNainaHubProperties(
+  params: Omit<FetchPropertiesParams, 'limit' | 'page'> = {}
+): Promise<NainaHubResponse> {
+  // First fetch to get total count
+  const initialResponse = await fetchNainaHubProperties({ ...params, limit: 1 });
+
+  if (!initialResponse.success) {
+    return initialResponse;
+  }
+
+  const total = initialResponse.pagination.total;
+
+  // Fetch all properties with the total count as limit
+  return fetchNainaHubProperties({ ...params, limit: total });
+}
+
+/**
  * Fetch a single property by ID from NainaHub
  * Note: This fetches all properties and filters - ideally the API would support fetching by ID
  */
 export async function fetchNainaHubPropertyById(
   id: string
 ): Promise<NainaHubProperty | null> {
-  // Fetch with high limit to find the property
-  const response = await fetchNainaHubProperties({ limit: 100 });
+  // Fetch all properties to find the one we need
+  const response = await fetchAllNainaHubProperties();
   return response.data.find((p) => p.id === id) || null;
 }

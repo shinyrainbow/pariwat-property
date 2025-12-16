@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { fetchNainaHubProperties } from "@/lib/nainahub";
+import { fetchAllNainaHubProperties } from "@/lib/nainahub";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/admin/dashboard - Get dashboard statistics from real data
@@ -13,8 +13,8 @@ export async function GET() {
   }
 
   try {
-    // Fetch real properties from NainaHub API
-    const apiResponse = await fetchNainaHubProperties({ limit: 100 });
+    // Fetch ALL properties from NainaHub API
+    const apiResponse = await fetchAllNainaHubProperties();
 
     if (!apiResponse.success) {
       return NextResponse.json(

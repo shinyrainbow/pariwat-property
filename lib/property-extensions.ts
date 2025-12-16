@@ -6,6 +6,7 @@
 import { prisma } from "./prisma";
 import {
   fetchNainaHubProperties,
+  fetchAllNainaHubProperties,
   fetchNainaHubPropertyById,
   type NainaHubProperty,
   type FetchPropertiesParams,
@@ -395,7 +396,7 @@ export async function getEnhancedPropertiesWithPromotions(
   }
 
   // 2. Fetch all properties from API
-  const apiResponse = await fetchNainaHubProperties({ limit: 100 });
+  const apiResponse = await fetchAllNainaHubProperties();
 
   if (!apiResponse.success) {
     return [];
@@ -455,7 +456,7 @@ export async function getPopularProperties(
   }
 
   // 2. Fetch all properties from API (with high limit to find our popular ones)
-  const apiResponse = await fetchNainaHubProperties({ limit: 100 });
+  const apiResponse = await fetchAllNainaHubProperties();
 
   if (!apiResponse.success) {
     return [];
@@ -503,7 +504,7 @@ export async function getClosedDeals(
   limit: number = 8
 ): Promise<EnhancedProperty[]> {
   // 1. Fetch all properties from API
-  const apiResponse = await fetchNainaHubProperties({ limit: 100 });
+  const apiResponse = await fetchAllNainaHubProperties();
 
   if (!apiResponse.success) {
     return [];
