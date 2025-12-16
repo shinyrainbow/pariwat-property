@@ -260,23 +260,24 @@ export default function AdminDashboardPage() {
               ([type, count]) => {
                 const total = data.stats.totalProperties;
                 const percentage = total > 0 ? (count / total) * 100 : 0;
-                const labels: Record<string, string> = {
-                  Condo: "คอนโด",
-                  Townhouse: "ทาวน์เฮ้าส์",
-                  SingleHouse: "บ้านเดี่ยว",
-                  Land: "ที่ดิน",
-                };
                 const colors: Record<string, string> = {
                   Condo: "bg-blue-500",
                   Townhouse: "bg-green-500",
                   SingleHouse: "bg-purple-500",
+                  Villa: "bg-pink-500",
                   Land: "bg-amber-500",
+                  Office: "bg-indigo-500",
+                  Store: "bg-orange-500",
+                  Factory: "bg-gray-500",
+                  Hotel: "bg-red-500",
+                  Building: "bg-cyan-500",
+                  Apartment: "bg-teal-500",
                 };
                 return (
                   <div key={type}>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-700">
-                        {labels[type] || type}
+                        {getPropertyTypeLabel(type)}
                       </span>
                       <span className="text-gray-500">
                         {count} ({percentage.toFixed(0)}%)
