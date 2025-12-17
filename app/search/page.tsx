@@ -182,7 +182,7 @@ function SearchContent() {
       setLoading(true);
       try {
         const [propertiesRes, projectsRes] = await Promise.all([
-          fetch("/api/public/enhanced-properties?limit=100"),
+          fetch("/api/public/enhanced-properties?fetchAll=true"),
           fetch("/api/public/projects"),
         ]);
 

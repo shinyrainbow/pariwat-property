@@ -100,6 +100,71 @@ export async function getEnhancedProperties(
 }
 
 /**
+ * Get ALL enhanced properties (no pagination limit)
+ */
+export async function getAllEnhancedProperties(
+  options: { includeHidden?: boolean } = {}
+): Promise<EnhancedPropertiesResponse> {
+  // 1. Fetch ALL properties from external API
+  const apiResponse = await fetchAllNainaHubProperties();
+
+  if (!apiResponse.success || apiResponse.data.length === 0) {
+    return {
+      success: apiResponse.success,
+      data: [],
+      pagination: apiResponse.pagination,
+    };
+  }
+
+  // 2. Get all extensions for these properties in one query
+  const propertyIds = apiResponse.data.map((p) => p.id);
+  const extensions = await prisma.propertyExtension.findMany({
+    where: {
+      externalPropertyId: { in: propertyIds },
+    },
+    include: {
+      promotions: {
+        where: {
+          isActive: true,
+          OR: [{ endDate: null }, { endDate: { gte: new Date() } }],
+        },
+        orderBy: { createdAt: "desc" },
+      },
+      tags: true,
+    },
+  });
+
+  // 3. Create lookup map for extensions
+  const extensionMap = new Map(
+    extensions.map((ext) => [ext.externalPropertyId, ext])
+  );
+
+  // 4. Merge API data with extensions
+  let enhancedData: EnhancedProperty[] = apiResponse.data.map((property) => ({
+    ...property,
+    extension: extensionMap.get(property.id) || null,
+  }));
+
+  // Filter hidden properties unless includeHidden is true
+  if (!options.includeHidden) {
+    enhancedData = enhancedData.filter((p) => !p.extension?.isHidden);
+  }
+
+  // 5. Sort by priority (higher first), then by original order
+  enhancedData.sort((a, b) => {
+    const priorityA = a.extension?.priority || 0;
+    const priorityB = b.extension?.priority || 0;
+    return priorityB - priorityA;
+  });
+
+  return {
+    success: true,
+    data: enhancedData,
+    pagination: apiResponse.pagination,
+  };
+}
+
+/**
  * Get a single enhanced property by ID
  */
 export async function getEnhancedPropertyById(

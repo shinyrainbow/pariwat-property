@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { getEnhancedProperties } from "@/lib/property-extensions";
+import { getEnhancedProperties, getAllEnhancedProperties } from "@/lib/property-extensions";
 import type { FetchPropertiesParams } from "@/lib/nainahub";
 
 // GET /api/public/enhanced-properties - Get properties from external API merged with local extensions
@@ -48,7 +48,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const response = await getEnhancedProperties(params, options);
+    // Check if fetchAll is requested (fetch all properties without pagination)
+    const fetchAll = searchParams.get("fetchAll") === "true";
+
+    const response = fetchAll
+      ? await getAllEnhancedProperties(options)
+      : await getEnhancedProperties(params, options);
 
     return NextResponse.json(response);
   } catch (error) {
