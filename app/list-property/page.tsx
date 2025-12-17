@@ -368,7 +368,7 @@ export default function ListPropertyPage() {
                   ครอบคลุมทุกพื้นที่
                 </h3>
                 <p className="text-sm text-gray-600">
-                  บริการครอบคลุมทั้งในกรุงเทพฯ และต่างจังหวัด
+                  บริการครอบคลุมทั้งในฉะเชิงเทรา และต่างจังหวัด
                 </p>
               </div>
               <div className="text-center">

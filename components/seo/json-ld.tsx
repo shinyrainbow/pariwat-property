@@ -94,15 +94,15 @@ export function OrganizationJsonLd({
     url: "https://primeestate.co.th",
     logo: "https://primeestate.co.th/icon.svg",
     description:
-      "บริการที่ปรึกษาอสังหาริมทรัพย์ คอนโด บ้าน ทาวน์เฮ้าส์ ให้เช่าและขาย ในกรุงเทพฯ",
+      "บริการที่ปรึกษาอสังหาริมทรัพย์ คอนโด บ้าน ทาวน์เฮ้าส์ ให้เช่าและขาย ในฉะเชิงเทรา",
     areaServed: {
       "@type": "City",
-      name: "Bangkok",
+      name: "Chachoengsao",
       "@id": "https://www.wikidata.org/wiki/Q1861",
     },
     address: {
       "@type": "PostalAddress",
-      addressLocality: "Bangkok",
+      addressLocality: "Chachoengsao",
       addressCountry: "TH",
     },
     sameAs: [

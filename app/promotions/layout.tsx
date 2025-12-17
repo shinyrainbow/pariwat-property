@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     "โปรโมชันอสังหา",
     "ส่วนลดคอนโด",
     "โปรโมชันเช่าคอนโด",
-    "real estate promotions Bangkok",
+    "real estate promotions Chachoengsao",
   ],
   openGraph: {
     title: "โปรโมชัน - Pariwat Property",

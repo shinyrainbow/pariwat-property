@@ -36,7 +36,7 @@ function transformProperty(prop: NainaHubProperty) {
     longitude: prop.longitude || prop.project?.projectLongitude || null,
     address: "",
     district: "",
-    province: "Bangkok",
+    province: "Chachoengsao",
     status: "active" as const,
     featured: false,
     views: 0,

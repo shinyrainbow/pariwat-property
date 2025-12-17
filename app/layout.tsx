@@ -28,11 +28,11 @@ export const metadata: Metadata = {
     apple: "/apple-icon.png",
   },
   title: {
-    default: "Pariwat Property - อสังหาริมทรัพย์พรีเมียม กรุงเทพฯ",
+    default: "Pariwat Property - อสังหาริมทรัพย์พรีเมียม ฉะเชิงเทรา",
     template: "%s | Pariwat Property",
   },
   description:
-    "ค้นหาคอนโด บ้านเดี่ยว ทาวน์เฮ้าส์ ให้เช่าและขาย ในทำเลที่ดีที่สุดของกรุงเทพฯ บริการที่ปรึกษาอสังหาริมทรัพย์มืออาชีพ",
+    "ค้นหาคอนโด บ้านเดี่ยว ทาวน์เฮ้าส์ ให้เช่าและขาย ในทำเลที่ดีที่สุดของฉะเชิงเทรา บริการที่ปรึกษาอสังหาริมทรัพย์มืออาชีพ",
   keywords: [
     "อสังหาริมทรัพย์",
     "คอนโด",
@@ -40,11 +40,11 @@ export const metadata: Metadata = {
     "ทาวน์เฮ้าส์",
     "เช่าคอนโด",
     "ซื้อคอนโด",
-    "คอนโดกรุงเทพ",
+    "คอนโดฉะเชิงเทรา",
     "บ้านให้เช่า",
     "บ้านขาย",
     "Pariwat Property",
-    "real estate Bangkok",
+    "real estate Chachoengsao",
     "condo for rent",
     "house for sale",
     "สุขุมวิท",
@@ -66,23 +66,23 @@ export const metadata: Metadata = {
     locale: "th_TH",
     url: "https://www.pariwatproperty.com",
     siteName: "Pariwat Property",
-    title: "Pariwat Property - อสังหาริมทรัพย์พรีเมียม กรุงเทพฯ",
+    title: "Pariwat Property - อสังหาริมทรัพย์พรีเมียม ฉะเชิงเทรา",
     description:
-      "ค้นหาคอนโด บ้านเดี่ยว ทาวน์เฮ้าส์ ให้เช่าและขาย ในทำเลที่ดีที่สุดของกรุงเทพฯ",
+      "ค้นหาคอนโด บ้านเดี่ยว ทาวน์เฮ้าส์ ให้เช่าและขาย ในทำเลที่ดีที่สุดของฉะเชิงเทรา",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Pariwat Property - Premium Real Estate Bangkok",
+        alt: "Pariwat Property - Premium Real Estate Chachoengsao",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pariwat Property - อสังหาริมทรัพย์พรีเมียม กรุงเทพฯ",
+    title: "Pariwat Property - อสังหาริมทรัพย์พรีเมียม ฉะเชิงเทรา",
     description:
-      "ค้นหาคอนโด บ้านเดี่ยว ทาวน์เฮ้าส์ ให้เช่าและขาย ในทำเลที่ดีที่สุดของกรุงเทพฯ",
+      "ค้นหาคอนโด บ้านเดี่ยว ทาวน์เฮ้าส์ ให้เช่าและขาย ในทำเลที่ดีที่สุดของฉะเชิงเทรา",
     images: ["/og-image.jpg"],
   },
   robots: {

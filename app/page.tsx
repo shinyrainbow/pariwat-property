@@ -417,7 +417,7 @@ export default function PublicPropertiesPage() {
             className="text-base md:text-lg mb-8 text-gray-200 max-w-2xl mx-auto animate-fade-in-up"
             style={{ animation: "fadeInUp 1s ease-out 0.2s both" }}
           >
-            พบกับทรัพย์สินคุณภาพระดับพรีเมียม ในทำเลที่ดีที่สุดของกรุงเทพฯ
+            พบกับทรัพย์สินคุณภาพระดับพรีเมียม ในทำเลที่ดีที่สุดของฉะเชิงเทรา
           </p>
           <div
             className="animate-fade-in-up"
